@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/hammerdb-job-report-v1.schema.json",
+  "title": "HammerDB Job Report v1",
+  "description": "Pragmatic documentation schema for HammerDB summaryjson artifacts. The Python validator remains the source of truth.",
+  "type": "object",
+  "required": [
+    "schema",
+    "disclaimer",
+    "job",
+    "benchmark_config",
+    "result"
+  ],
+  "properties": {
+    "schema": {
+      "const": "hammerdb-job-report-v1"
+    },
+    "disclaimer": {
+      "type": "object",
+      "required": ["audited"],
+      "properties": {
+        "audited": {
+          "type": "boolean"
+        }
+      }
+    },
+    "job": {
+      "type": "object",
+      "required": [
+        "jobid",
+        "hdb_version",
+        "database",
+        "database_display",
+        "benchmark",
+        "timestamp"
+      ],
+      "properties": {
+        "jobid": {"type": "string", "minLength": 1},
+        "hdb_version": {"type": "string", "minLength": 1},
+        "database": {"type": "string", "minLength": 1},
+        "database_display": {"type": "string", "minLength": 1},
+        "benchmark": {"type": "string", "enum": ["TPROC-C", "TPROC-H"]},
+        "timestamp": {"type": "string", "minLength": 1}
+      }
+    },
+    "benchmark_config": {
+      "type": "object"
+    },
+    "result": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "additionalProperties": true
+}
