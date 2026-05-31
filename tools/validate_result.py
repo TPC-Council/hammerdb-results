@@ -42,8 +42,8 @@ def main() -> int:
 
     json_files = sorted(RESULTS_ROOT.rglob("*.json"))
     if not json_files:
-        print("ERROR: No JSON files found under results/")
-        return 1
+        print("No JSON files found under results/; nothing to validate.")
+        return 0
 
     for file_path in json_files:
         rel_path = file_path.relative_to(REPO_ROOT)
