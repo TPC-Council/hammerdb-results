@@ -1,0 +1,26 @@
+name: Validate HammerDB Results
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Validate artifacts
+        run: python tools/validate_result.py
+
+      - name: Build leaderboard
+        run: python tools/build_leaderboard.py
+
+      - name: Check leaderboard.json is valid JSON
+        run: python -m json.tool site/leaderboard.json > /dev/null
