@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Submit HammerDB Result Artifact</title>
+  <style>
+    :root{
+      --bg:#f4f7ff;--card:#fff;--line:#ddd8cf;--line-strong:#cfc7bb;--text:#0f172a;--muted:#64748b;
+      --blue:#2563eb;--good:#15803d;--good-bg:#f0fdf4;--good-line:#bbf7d0;
+      --warn:#b45309;--warn-bg:#fff7ed;--warn-line:#fdba74;
+      --err:#be123c;--err-bg:#fff1f2;--err-line:#fecdd3
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);line-height:1.5}
+    .wrap{max-width:1220px;margin:0 auto;padding:0 24px 32px}
+    .hero{background:var(--bg);color:var(--text);padding:18px 0 0;margin-bottom:0;}
+    .hero-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px;box-shadow:0 1px 2px rgba(60,50,40,.06)}
+    .brandbar{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:12px}
+    .brand-left{display:flex;align-items:flex-end;gap:18px}
+    .brand-hammerdb{height:62px;width:auto;display:block}
+    .brand-tpc{height:62px;width:auto;display:block;margin-top:0}
+    .hero h1{margin:0;font-size:2.2rem;line-height:1.08;letter-spacing:-.03em}
+    .hero p{max-width:820px;color:#334155;margin:0}
+    .hero-warn{margin-top:16px;padding:12px 14px;border-radius:12px;background:#fff;border:1px solid var(--line);color:#334155;font-weight:600;margin-bottom:0}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0 16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;box-shadow:0 1px 2px rgba(60,50,40,.06);margin-bottom:14px}
+    .card h2,.card h3{margin:0 0 8px;letter-spacing:-.015em}.card p{margin:0 0 12px}.muted{color:var(--muted)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:10px;background:#111827;color:#fff;text-decoration:none;padding:10px 14px;font-weight:800;cursor:pointer;font:inherit;font-size:.94rem}
+    .btn.primary{background:var(--blue)}
+    .btn.good{background:var(--good)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .star{color:#facc15;font-size:1.05rem;line-height:1}
+    .status{border-radius:14px;padding:14px 16px;margin-bottom:14px;border:1px solid var(--line);background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(60,50,40,.05)}
+    .status h3{margin:0 0 4px}.status p{margin:0}
+    .status.success{border-color:var(--good-line);background:var(--good-bg);color:var(--good)}
+    .status.warning{border-color:var(--warn-line);background:var(--warn-bg);color:var(--warn)}
+    .status.error{border-color:var(--err-line);background:var(--err-bg);color:var(--err)}
+    .summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .summary-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+    .summary-item .label{font-size:.76rem;text-transform:uppercase;color:var(--muted);font-weight:800;letter-spacing:.02em}
+    .summary-item .value{font-weight:850;word-break:break-word;margin-top:3px}
+    .summary-item.metric{background:#fff;border-color:#ddd8cf}
+    .submit-card{border:1px solid var(--line-strong)}
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 0}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+    .meta div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+    .meta strong{display:block;font-size:.75rem;text-transform:uppercase;color:var(--muted);letter-spacing:.02em}
+    details{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px}
+    summary{cursor:pointer;font-weight:800}
+    .details-body{margin-top:12px}
+    .code-box{background:#0b1020;color:#dbeafe;border-radius:12px;padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-word;border:1px solid #172554;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.88rem}
+    .small{font-size:.9rem}
+    @media(max-width:860px){.grid,.summary,.meta{grid-template-columns:1fr}.wrap{padding-left:16px;padding-right:16px}}
+    @media(max-width:700px){.brandbar{align-items:center}.brand-hammerdb{height:48px}.brand-tpc{height:48px}.brand-left{gap:12px}.hero h1{font-size:1.8rem}.hero{padding:14px 0 0}}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="hero-card">
+      <div class="brandbar">
+        <div class="brand-left">
+          <img class="brand-hammerdb" src="assets/images/hammerDB-H-logo-FINAL.png" alt="HammerDB">
+          <h1>Submit HammerDB Result Artifact</h1>
+        </div>
+        <img class="brand-tpc" src="assets/images/tpclogo.png" alt="TPC">
+      </div>
+      <div class="hero-warn">Community results are provided for review and are not official audited benchmark results.</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="grid">
+      <article class="card">
+        <h2>Star HammerDB on GitHub</h2>
+        <p class="muted">Help others discover HammerDB.</p>
+        <a id="star-link" class="btn" href="#" target="_blank" rel="noopener"><span class="star">★</span> Star HammerDB</a>
+      </article>
+      <article class="card">
+        <h2>Submit in two steps</h2>
+        <p><strong>1.</strong> Download the JSON artifact.</p>
+        <p><strong>2.</strong> Upload it to GitHub.</p>
+        <p class="muted small">GitHub records who submitted it, and the maintainer reviews before merge.</p>
+      </article>
+    </section>
+
+    <section id="status" class="status" role="status" aria-live="polite"></section>
+
+    <section id="preview-card" class="card" hidden>
+      <h2>Result preview</h2>
+      <div id="preview" class="summary"></div>
+    </section>
+
+    <section id="submit-card" class="card submit-card" hidden>
+      <h2>Submit to GitHub</h2>
+      <p class="muted">Download the artifact, then upload that same file on the GitHub page that opens.</p>
+
+      <div class="meta">
+        <div><strong>File name</strong><span id="artifact-filename">—</span></div>
+        <div><strong>Upload folder</strong><span id="target-directory">—</span></div>
+      </div>
+
+      <div class="actions">
+        <button id="download-json" type="button" class="btn good" disabled>1. Download JSON</button>
+        <button id="open-upload" type="button" class="btn primary" disabled>2. Open GitHub upload</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <details>
+        <summary>Artifact preview</summary>
+        <div class="details-body">
+          <p class="muted small">Artifact URL</p>
+          <pre id="artifact-url" class="code-box">Not loaded.</pre>
+          <p class="muted small">Raw artifact JSON</p>
+          <pre id="raw-json" class="code-box">Not loaded.</pre>
+        </div>
+      </details>
+    </section>
+  </main>
+
+<script>
+(function () {
+  const TARGET_OWNER = "sm-shaw";
+  const TARGET_REPO = "hammerdb-results";
+  const TARGET_BRANCH = "master";
+  const HAMMERDB_PROJECT_URL = "https://github.com/TPC-Council/HammerDB";
+
+  const statusEl = document.getElementById("status");
+  const previewCardEl = document.getElementById("preview-card");
+  const previewEl = document.getElementById("preview");
+  const submitCardEl = document.getElementById("submit-card");
+  const artifactUrlEl = document.getElementById("artifact-url");
+  const rawEl = document.getElementById("raw-json");
+  const downloadJsonButton = document.getElementById("download-json");
+  const openUploadButton = document.getElementById("open-upload");
+  const artifactFilenameEl = document.getElementById("artifact-filename");
+  const targetDirectoryEl = document.getElementById("target-directory");
+  const starLinkEl = document.getElementById("star-link");
+
+  let targetPath = "";
+  let targetDirectory = "";
+  let artifactFilename = "";
+  let rawJson = "";
+
+  starLinkEl.href = HAMMERDB_PROJECT_URL;
+
+  function setStatus(title, message, kind) {
+    statusEl.className = "status" + (kind ? " " + kind : "");
+    statusEl.replaceChildren();
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    const body = document.createElement("p");
+    body.textContent = message;
+    statusEl.append(heading, body);
+  }
+
+  function addPreviewItem(label, value, isMetric) {
+    const item = document.createElement("div");
+    item.className = "summary-item" + (isMetric ? " metric" : "");
+    const key = document.createElement("div");
+    key.className = "label";
+    key.textContent = label;
+    const val = document.createElement("div");
+    val.className = "value";
+    val.textContent = value == null || value === "" ? "—" : String(value);
+    item.append(key, val);
+    previewEl.appendChild(item);
+  }
+
+  function slugify(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function parseTimestampParts(timestamp) {
+    if (!timestamp) return null;
+    const normalized = String(timestamp).replace("T", " ");
+    const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s|$)/);
+    if (!match) return null;
+    return { year: match[1], month: match[2] };
+  }
+
+  function formatNumber(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return value;
+    return number.toLocaleString();
+  }
+
+  async function fetchArtifact(artifactUrl) {
+    let response = await fetch(artifactUrl, { headers: { "Accept": "application/json" } });
+    if (response.status === 401) {
+      response = await fetch(artifactUrl, { headers: { "Accept": "application/json" }, credentials: "include" });
+    }
+    return response;
+  }
+
+  async function artifactAlreadyExists(path) {
+    const rawUrl = "https://raw.githubusercontent.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/" + TARGET_BRANCH + "/" + path;
+    try {
+      const response = await fetch(rawUrl, { method: "HEAD", cache: "no-store" });
+      return response.ok;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function prepareSubmission(job, result) {
+    previewEl.replaceChildren();
+
+    addPreviewItem("Job ID", job.jobid, false);
+    addPreviewItem("Benchmark", job.benchmark, false);
+    addPreviewItem("Database", job.database_display || job.database, false);
+    addPreviewItem("Release", job.release, false);
+    addPreviewItem("Timestamp", job.timestamp, false);
+    addPreviewItem("HammerDB version", job.hdb_version, false);
+
+    if (job.benchmark === "TPROC-C") {
+      addPreviewItem("NOPM", formatNumber(result.nopm), true);
+      addPreviewItem("TPM", formatNumber(result.tpm), true);
+    } else if (job.benchmark === "TPROC-H") {
+      addPreviewItem("Geomean seconds", formatNumber(result.geomean_seconds), true);
+      addPreviewItem("Total query time seconds", formatNumber(result.total_query_time_seconds), true);
+    }
+
+    const timestampParts = parseTimestampParts(job.timestamp);
+    if (!timestampParts) {
+      setStatus("Invalid timestamp", "The artifact timestamp must start with YYYY-MM-DD.", "error");
+      return;
+    }
+
+    const benchmarkSlug = slugify(job.benchmark);
+    const databaseSlug = slugify(job.database_display || job.database);
+
+    artifactFilename = job.jobid + ".json";
+    targetDirectory = "results/" + benchmarkSlug + "/" + databaseSlug + "/" + timestampParts.year + "/" + timestampParts.month;
+    targetPath = targetDirectory + "/" + artifactFilename;
+
+    artifactFilenameEl.textContent = artifactFilename;
+    targetDirectoryEl.textContent = targetDirectory;
+
+    previewCardEl.hidden = false;
+    submitCardEl.hidden = false;
+
+    artifactAlreadyExists(targetPath).then((exists) => {
+      if (exists) {
+        downloadJsonButton.disabled = true;
+        openUploadButton.disabled = true;
+        setStatus("Already submitted", "This artifact already exists in the results repository. No upload is needed.", "success");
+        return;
+      }
+
+      downloadJsonButton.disabled = false;
+      openUploadButton.disabled = false;
+      setStatus("Ready to submit", "Download the JSON artifact, then upload it to GitHub.", "success");
+    });
+  }
+
+  async function run() {
+    const params = new URLSearchParams(window.location.search);
+    const artifactUrl = params.get("artifact_url");
+
+    if (!artifactUrl) {
+      setStatus("Missing artifact URL", "Open this page from HammerDB using Share with TPC-OSS.", "error");
+      return;
+    }
+
+    artifactUrlEl.textContent = artifactUrl;
+    setStatus("Checking artifact", "Loading the HammerDB result…", "");
+
+    let response;
+    try {
+      response = await fetchArtifact(artifactUrl);
+    } catch (err) {
+      setStatus("Artifact could not be loaded", "Check the artifact URL, network access, CORS headers or Basic Auth.", "error");
+      return;
+    }
+
+    if (!response.ok) {
+      setStatus("Artifact could not be loaded", "HTTP status: " + response.status + ".", "error");
+      return;
+    }
+
+    const rawText = await response.text();
+    let artifact;
+    try {
+      artifact = JSON.parse(rawText);
+    } catch (err) {
+      rawEl.textContent = rawText;
+      setStatus("Invalid JSON", "The fetched content is not valid JSON.", "error");
+      return;
+    }
+
+    rawJson = JSON.stringify(artifact, null, 2);
+    rawEl.textContent = rawJson;
+
+    const job = artifact.job || {};
+    const result = artifact.result || {};
+    const required = ["jobid", "benchmark", "database", "database_display", "timestamp", "hdb_version"];
+    const missing = required.filter((field) => !job[field]);
+
+    if (missing.length > 0) {
+      setStatus("Artifact is missing required fields", missing.join(", "), "error");
+      return;
+    }
+
+    prepareSubmission(job, result);
+  }
+
+  downloadJsonButton.addEventListener("click", () => {
+    if (!rawJson || !artifactFilename) return;
+    const blob = new Blob([rawJson + "\n"], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = artifactFilename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  openUploadButton.addEventListener("click", () => {
+    if (!targetDirectory) return;
+    const uploadUrl = "https://github.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/upload/" + TARGET_BRANCH + "/" + encodeURI(targetDirectory);
+    window.open(uploadUrl, "_blank", "noopener");
+  });
+
+  run();
+})();
+</script>
+</body>
+</html>

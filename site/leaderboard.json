@@ -1,0 +1,10 @@
+{
+  "generated_at_utc": "2026-05-31T09:00:52+00:00",
+  "title": "HammerDB Result Artifacts Prototype Data",
+  "disclaimer": [
+    "Community-submitted HammerDB results",
+    "Unaudited",
+    "Not official TPC benchmark results"
+  ],
+  "rows": []
+}

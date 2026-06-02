@@ -1,0 +1,464 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>HammerDB Artifact Review Preview</title>
+<style>:root{--bg:#f4f7ff;--card:#fff;--line:#dbe4f0;--text:#0f172a;--muted:#64748b}*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.top{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line)}.top-inner{max-width:1200px;margin:0 auto;padding:10px 18px;display:flex;justify-content:space-between;align-items:center}.back{display:inline-block;padding:8px 12px;border-radius:10px;background:#e9efff;color:#1e3a8a;text-decoration:none;font-weight:700}.label{color:var(--muted);font-weight:700}
+.wrap{max-width:1200px;margin:0 auto;padding:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 6px 18px rgba(15,23,42,.05)}.hero{display:grid;grid-template-columns:2fr 1fr;gap:14px}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.m{background:#f8fbff;border:1px solid #e6edf8;border-radius:10px;padding:8px}.k{font-size:.75rem;text-transform:uppercase;color:var(--muted);font-weight:700}.v{font-weight:700}
+.big{font-size:2rem;font-weight:800}.sub{font-size:1rem;color:var(--muted)}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{background:#eef4ff;border:1px solid #d5e3ff;border-radius:999px;padding:5px 10px;font-size:.82rem}.kv{display:grid;grid-template-columns:180px 1fr;gap:8px}.kv .key{font-weight:700;color:#334155}
+table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #e8edf7;padding:8px;text-align:left}th{color:var(--muted);font-size:.82rem}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.warn{background:#fff7ed;border:1px solid #fdba74;border-radius:12px;padding:12px}.err{background:#fff1f2;border:1px solid #fecdd3}.muted{color:var(--muted)}details pre{overflow:auto;background:#0b1020;color:#dbeafe;padding:10px;border-radius:10px}
+.chart-box{position:relative;height:300px;width:100%}.chart-box canvas{width:100%!important;height:100%!important;display:block}.legend{font-size:.8rem;color:#475569;margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+@media(max-width:980px){.hero,.grid2,.meta{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}</style></head><body>
+<nav class="top"><div class="top-inner"><span class="back">Review preview</span><span class="label">HammerDB Artifact Review</span></div></nav>
+<main class="wrap"><div class="card warn"><strong>Review preview.</strong> This artifact is being rendered from a supplied JSON URL and has not been published on the leaderboard.</div><div id="status" class="card">Loading artifact…</div><div id="content" style="display:none">
+<section class="card hero"><div><h1 id="title" style="margin:0 0 8px"></h1><div class="meta" id="headline-meta"></div></div><div><div class="k">Primary metric</div><div id="primary" class="big">—</div><div id="secondary" class="sub">—</div></div></section>
+<section class="card"><h2>Benchmark configuration</h2><div id="cfg" class="chips"></div></section>
+<section class="card"><h2>Response Times</h2><table><thead><tr><th>Operation</th><th>p25</th><th>p50</th><th>p75</th><th>p95</th><th>p99</th></tr></thead><tbody id="rt"></tbody></table></section>
+<section class="card"><h2>System</h2><div id="sys" class="kv"></div></section>
+<section class="card"><h2>Charts</h2>
+  <section class="grid2"><section><h3>NOPM/TPM</h3><div class="chart-box"><canvas id="resultBar"></canvas></div></section><section><h3>Response-time percentiles</h3><div class="chart-box"><canvas id="rtchart"></canvas></div></section></section>
+  <section class="grid2"><section><h3>Transaction count</h3><div class="chart-box"><canvas id="tx"></canvas></div></section><section><h3>CPU</h3><div class="chart-box"><canvas id="cpu"></canvas></div></section></section>
+  <section class="grid2"><section><h3>IOPS</h3><div class="chart-box"><canvas id="iops"></canvas></div></section><section><h3>MB/s</h3><div class="chart-box"><canvas id="mbps"></canvas></div></section></section>
+</section>
+<section class="card"><h2>Disclaimer</h2><div class="warn">User-submitted, unaudited HammerDB result artifact. Review before publication.</div></section><section class="card"><details><summary>Show raw artifact JSON</summary><pre id="raw"></pre></details></section></div></main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(() => {
+  const qp = new URLSearchParams(location.search);
+  const raw = qp.get("artifact_url");
+  const status = document.getElementById("status");
+  const content = document.getElementById("content");
+
+  const charts = {};
+
+  function replaceChart(id, config) {
+    if (charts[id]) {
+      charts[id].destroy();
+    }
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext("2d");
+    charts[id] = new Chart(ctx, config);
+  }
+
+  function formatNumber(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "—";
+    return Math.round(n).toLocaleString();
+  }
+
+  function formatPercent(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "—";
+    return `${Math.round(n)}%`;
+  }
+
+  function formatTime(timestamp) {
+    if (!timestamp) return "";
+    const s = String(timestamp);
+    const match = s.match(/(\d{2}:\d{2}(?::\d{2})?)/);
+    if (match) return match[1];
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) return d.toISOString().slice(11, 19);
+    return s;
+  }
+
+  function formatMs(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "—";
+    if (n >= 10) return String(Math.round(n));
+    return String(Math.round(n * 1000) / 1000).replace(/0+$/, "").replace(/\.$/, "");
+  }
+
+  function esc(s) {
+    return String(s ?? "—").replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  }
+
+  function baseOptions(yLabel, xLabel, tickFormatter) {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          position: "bottom"
+        },
+        tooltip: {
+          enabled: true,
+          intersect: false
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: xLabel
+          },
+          ticks: {
+            autoSkip: true,
+            maxTicksLimit: 6,
+            maxRotation: 0
+          },
+          grid: {
+            color: "#eef2f7"
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: yLabel
+          },
+          ticks: {
+            callback: tickFormatter
+          },
+          grid: {
+            color: "#eef2f7"
+          }
+        }
+      }
+    };
+  }
+
+  const lineBase = {
+    pointRadius: 2,
+    pointHoverRadius: 5,
+    pointHitRadius: 12,
+    tension: 0.2
+  };
+
+  let artifactUrl;
+  const fail = (title, detail, code) => {
+    status.className = "card err";
+    status.innerHTML = `<h2>${esc(title)}</h2><p class='muted'>${esc(detail)}</p><p><b>artifact_url parameter:</b> ${esc(raw)}</p><p><b>resolved fetch URL:</b> ${esc(String(artifactUrl || "n/a"))}</p>${code ? `<p><b>HTTP status:</b> ${code}</p>` : ""}`;
+  };
+
+  if (!raw) {
+    fail("Missing artifact_url parameter", "Open this page with ?artifact_url=<encoded raw GitHub JSON URL>.");
+    return;
+  }
+
+  let artifact;
+  try {
+    artifact = decodeURIComponent(raw);
+  } catch {
+    artifact = raw;
+  }
+
+  try {
+    artifactUrl = new URL(String(artifact || ""));
+  } catch {
+    fail("Invalid artifact_url", "Could not resolve artifact URL.");
+    return;
+  }
+
+  if (artifactUrl.protocol !== "https:" && artifactUrl.protocol !== "http:") {
+    fail("Invalid artifact_url", "Only http and https artifact URLs are supported.");
+    return;
+  }
+
+  fetch(artifactUrl)
+    .then(r => {
+      if (!r.ok) {
+        fail("Artifact fetch failed", "The review artifact could not be loaded from the supplied URL.", r.status);
+        throw new Error("stop");
+      }
+      return r.json();
+    })
+    .then(a => {
+      status.style.display = "none";
+      content.style.display = "block";
+      document.getElementById("raw").textContent = JSON.stringify(a, null, 2);
+
+      const j = a.job || {};
+      const res = a.result || {};
+      const cfg = a.benchmark_config || {};
+      const sys = a.system || {};
+
+      document.getElementById("title").textContent = `${j.database_display || j.database || "Unknown"} · ${j.benchmark || "Unknown benchmark"}`;
+
+      [
+        ["Release", j.release],
+        ["HammerDB Version", j.hdb_version],
+        ["Timestamp", j.timestamp],
+        ["Job ID", j.jobid],
+        ["Database", j.database],
+        ["Benchmark", j.benchmark]
+      ].forEach(([k, v]) => {
+        const d = document.createElement("div");
+        d.className = "m";
+        d.innerHTML = `<div class='k'>${esc(k)}</div><div class='v'>${esc(v)}</div>`;
+        document.getElementById("headline-meta").appendChild(d);
+      });
+
+      if ((j.benchmark || "").toUpperCase() === "TPROC-H") {
+        document.getElementById("primary").textContent = `${formatNumber(res.geomean_seconds)} Geomean`;
+        document.getElementById("secondary").textContent = `Total Query Time: ${formatNumber(res.total_query_time_seconds)}`;
+      } else {
+        document.getElementById("primary").textContent = `${formatNumber(res.nopm)} NOPM`;
+        document.getElementById("secondary").textContent = `TPM: ${formatNumber(res.tpm)}`;
+      }
+
+      const cfgL = { warehouses: "Warehouses", virtual_users: "Virtual Users", rampup_minutes: "Rampup", duration_minutes: "Duration" };
+      Object.entries(cfg).forEach(([k, v]) => {
+        const c = document.createElement("span");
+        c.className = "chip";
+        c.textContent = `${cfgL[k] || k}: ${v}`;
+        document.getElementById("cfg").appendChild(c);
+      });
+
+      [
+        ["hostname", "Hostname"],
+        ["cpumodel", "CPU Model"],
+        ["cpucount", "CPU Count"],
+        ["memory", "Memory"],
+        ["system_vendor", "System Vendor"],
+        ["system_type", "System Type"],
+        ["os_name", "OS"],
+        ["nic", "NIC"],
+        ["storage", "Storage"],
+        ["cloud_instance", "Cloud Instance"]
+      ].forEach(([k, l]) => {
+        if (sys[k] !== undefined) {
+          const kd = document.createElement("div");
+          kd.className = "key";
+          kd.textContent = l;
+          const vd = document.createElement("div");
+          vd.textContent = sys[k] ?? "—";
+          document.getElementById("sys").append(kd, vd);
+        }
+      });
+
+      const rr = a.response_times?.rows || [];
+      const rt = document.getElementById("rt");
+      if (!rr.length) {
+        rt.innerHTML = '<tr><td colspan="6" class="muted">No data available</td></tr>';
+      } else {
+        rr.forEach(x => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${esc(x.name)}</td><td>${formatMs(x.p25_ms)}</td><td>${formatMs(x.p50_ms)}</td><td>${formatMs(x.p75_ms)}</td><td>${formatMs(x.p95_ms)}</td><td>${formatMs(x.p99_ms)}</td>`;
+          rt.appendChild(tr);
+        });
+      }
+
+      const tx = (a.transaction_count?.series || []).flatMap(s =>
+        (s.points || []).map(p => ({
+          timestamp: p.timestamp || p.t || p.ts || "",
+          value: Number(p.value || 0)
+        }))
+      );
+
+      const cpu = (a.metrics?.cpu_percent || []).map(p => ({
+        timestamp: p.timestamp || p.t || p.ts || "",
+        usr: Number(p.usr_pct || 0),
+        sys: Number(p.sys_pct || 0)
+      }));
+
+      const iops = (a.metrics?.iops || []).map(p => ({
+        timestamp: p.timestamp || p.t || p.ts || "",
+        value: Number(p.value || 0)
+      }));
+
+      const mbps = (a.metrics?.mbps || []).map(p => ({
+        timestamp: p.timestamp || p.t || p.ts || "",
+        value: Number(p.value || 0)
+      }));
+
+      const opOrder = ["NEWORD", "PAYMENT", "DELIVERY", "SLEV", "OSTAT"];
+      const byName = new Map(rr.map(r => [String(r.name || "").toUpperCase(), r]));
+      const orderedRows = opOrder.map(n => byName.get(n)).filter(Boolean);
+
+      replaceChart("resultBar", {
+        type: "bar",
+        data: {
+          labels: ["NOPM", "TPM"],
+          datasets: [{
+            data: [Number(res.nopm || 0), Number(res.tpm || 0)],
+            backgroundColor: ["#2563eb", "#1d4ed8"],
+            borderRadius: 8
+          }]
+        },
+        options: {
+          ...baseOptions("Transactions", "Metric", v => formatNumber(v)),
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              enabled: true,
+              intersect: false,
+              callbacks: {
+                label: c => `${c.label}: ${formatNumber(c.raw)}`
+              }
+            }
+          }
+        }
+      });
+
+      replaceChart("rtchart", {
+        type: "bar",
+        data: {
+          labels: orderedRows.map(r => String(r.name || "").toUpperCase()),
+          datasets: [
+            { label: "p50", data: orderedRows.map(r => Number(r.p50_ms || 0)), backgroundColor: "#3b82f6" },
+            { label: "p95", data: orderedRows.map(r => Number(r.p95_ms || 0)), backgroundColor: "#f59e0b" },
+            { label: "p99", data: orderedRows.map(r => Number(r.p99_ms || 0)), backgroundColor: "#7c3aed" }
+          ]
+        },
+        options: {
+          ...baseOptions("Latency (ms)", "Operation", v => formatMs(v)),
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              enabled: true,
+              intersect: false,
+              callbacks: {
+                title: items => `Operation: ${orderedRows[items[0].dataIndex]?.name || ""}`,
+                afterBody: items => {
+                  const row = orderedRows[items[0].dataIndex];
+                  if (!row) return [];
+                  return [
+                    `p25: ${formatMs(row.p25_ms)} ms`,
+                    `p50: ${formatMs(row.p50_ms)} ms`,
+                    `p75: ${formatMs(row.p75_ms)} ms`,
+                    `p95: ${formatMs(row.p95_ms)} ms`,
+                    `p99: ${formatMs(row.p99_ms)} ms`
+                  ];
+                }
+              }
+            }
+          }
+        }
+      });
+
+      replaceChart("tx", {
+        type: "line",
+        data: {
+          labels: tx.map(p => formatTime(p.timestamp)),
+          datasets: [{
+            label: "Transactions",
+            data: tx.map(p => p.value),
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37,99,235,.12)",
+            fill: true,
+            ...lineBase
+          }]
+        },
+        options: {
+          ...baseOptions("Transactions", "Time", v => formatNumber(v)),
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              enabled: true,
+              intersect: false,
+              callbacks: {
+                title: items => tx[items[0].dataIndex]?.timestamp || "",
+                label: c => `Transactions: ${formatNumber(c.raw)}`
+              }
+            }
+          }
+        }
+      });
+
+      replaceChart("cpu", {
+        type: "line",
+        data: {
+          labels: cpu.map(p => formatTime(p.timestamp)),
+          datasets: [
+            { label: "usr %", data: cpu.map(p => p.usr), borderColor: "#16a34a", backgroundColor: "rgba(22,163,74,.08)", fill: false, ...lineBase },
+            { label: "sys %", data: cpu.map(p => p.sys), borderColor: "#dc2626", backgroundColor: "rgba(220,38,38,.08)", fill: false, ...lineBase }
+          ]
+        },
+        options: {
+          ...baseOptions("CPU %", "Time", v => formatPercent(v)),
+          scales: {
+            x: {
+              title: { display: true, text: "Time" },
+              ticks: { autoSkip: true, maxTicksLimit: 6, maxRotation: 0 },
+              grid: { color: "#eef2f7" }
+            },
+            y: {
+              min: 0,
+              max: 100,
+              title: { display: true, text: "CPU %" },
+              ticks: { callback: v => formatPercent(v) },
+              grid: { color: "#eef2f7" }
+            }
+          },
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              enabled: true,
+              intersect: false,
+              callbacks: {
+                title: items => cpu[items[0].dataIndex]?.timestamp || "",
+                label: c => `${c.dataset.label}: ${formatPercent(c.raw)}`
+              }
+            }
+          }
+        }
+      });
+
+      replaceChart("iops", {
+        type: "line",
+        data: {
+          labels: iops.map(p => formatTime(p.timestamp)),
+          datasets: [{
+            label: "IOPS",
+            data: iops.map(p => p.value),
+            borderColor: "#0d9488",
+            backgroundColor: "rgba(13,148,136,.12)",
+            fill: true,
+            ...lineBase
+          }]
+        },
+        options: {
+          ...baseOptions("IOPS", "Time", v => formatNumber(v)),
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              enabled: true,
+              intersect: false,
+              callbacks: {
+                title: items => iops[items[0].dataIndex]?.timestamp || "",
+                label: c => `IOPS: ${formatNumber(c.raw)}`
+              }
+            }
+          }
+        }
+      });
+
+      replaceChart("mbps", {
+        type: "line",
+        data: {
+          labels: mbps.map(p => formatTime(p.timestamp)),
+          datasets: [{
+            label: "MB/s",
+            data: mbps.map(p => p.value),
+            borderColor: "#7c3aed",
+            backgroundColor: "rgba(124,58,237,.12)",
+            fill: true,
+            ...lineBase
+          }]
+        },
+        options: {
+          ...baseOptions("MB/s", "Time", v => formatMs(v)),
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              enabled: true,
+              intersect: false,
+              callbacks: {
+                title: items => mbps[items[0].dataIndex]?.timestamp || "",
+                label: c => `MB/s: ${formatMs(c.raw)}`
+              }
+            }
+          }
+        }
+      });
+    })
+    .catch(e => {
+      if (e.message !== "stop") {
+        fail("Error loading artifact", e.message || "Unknown error");
+      }
+    });
+})();
+</script></body></html>
