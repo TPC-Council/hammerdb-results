@@ -6,6 +6,8 @@ from html import escape
 from pathlib import Path
 from urllib.parse import quote
 
+from result_validation import format_validation_failure, validate_artifacts
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_ROOT = REPO_ROOT / "results"
 SITE_ROOT = REPO_ROOT / "site"
@@ -150,6 +152,11 @@ def _write_html(rows: list[dict]) -> None:
     INDEX_HTML.write_text(html, encoding='utf-8')
 
 def main() -> int:
+    validation = validate_artifacts(REPO_ROOT, RESULTS_ROOT)
+    if not validation.ok:
+        print(format_validation_failure(validation.errors))
+        return 1
+
     SITE_ROOT.mkdir(parents=True, exist_ok=True)
     rows = _load_rows(); _write_json(rows); _write_html(rows)
     print(f"Generated {LEADERBOARD_JSON.relative_to(REPO_ROOT)} and {INDEX_HTML.relative_to(REPO_ROOT)} with {len(rows)} row(s).")
