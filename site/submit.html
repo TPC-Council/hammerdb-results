@@ -79,10 +79,11 @@
         <a id="star-link" class="btn" href="#" target="_blank" rel="noopener"><span class="star">★</span> Star HammerDB</a>
       </article>
       <article class="card">
-        <h2>Submit in two steps</h2>
-        <p><strong>1.</strong> Download the JSON artifact.</p>
-        <p><strong>2.</strong> Upload it to GitHub.</p>
-        <p class="muted small">GitHub records who submitted it, and the maintainer reviews before merge.</p>
+        <h2>Submit with GitHub</h2>
+        <p><strong>1.</strong> Sign in to GitHub.</p>
+        <p><strong>2.</strong> Download the JSON artifact.</p>
+        <p><strong>3.</strong> Create a result file and paste the JSON into the GitHub editor.</p>
+        <p class="muted small">If you do not have write access, GitHub will fork the repository and guide you to open a pull request.</p>
       </article>
     </section>
 
@@ -95,16 +96,16 @@
 
     <section id="submit-card" class="card submit-card" hidden>
       <h2>Submit to GitHub</h2>
-      <p class="muted">Download the artifact, then upload that same file on the GitHub page that opens.</p>
+      <p class="muted">Sign in to GitHub, download the artifact, click “Create result file”, paste the JSON into the GitHub editor, then click “Commit changes”. If you do not have write access, GitHub will fork the repository and guide you to open a pull request.</p>
 
       <div class="meta">
         <div><strong>File name</strong><span id="artifact-filename">—</span></div>
-        <div><strong>Upload folder</strong><span id="target-directory">—</span></div>
+        <div><strong>Target folder</strong><span id="target-directory">—</span></div>
       </div>
 
       <div class="actions">
         <button id="download-json" type="button" class="btn good" disabled>1. Download JSON</button>
-        <button id="open-upload" type="button" class="btn primary" disabled>2. Open GitHub upload</button>
+        <button id="create-result-file" type="button" class="btn primary" disabled>2. Create result file</button>
       </div>
     </section>
 
@@ -123,7 +124,7 @@
 
 <script>
 (function () {
-  const TARGET_OWNER = "sm-shaw";
+  const TARGET_OWNER = "TPC-Council";
   const TARGET_REPO = "hammerdb-results";
   const TARGET_BRANCH = "master";
   const HAMMERDB_PROJECT_URL = "https://github.com/TPC-Council/HammerDB";
@@ -135,7 +136,7 @@
   const artifactUrlEl = document.getElementById("artifact-url");
   const rawEl = document.getElementById("raw-json");
   const downloadJsonButton = document.getElementById("download-json");
-  const openUploadButton = document.getElementById("open-upload");
+  const createResultFileButton = document.getElementById("create-result-file");
   const artifactFilenameEl = document.getElementById("artifact-filename");
   const targetDirectoryEl = document.getElementById("target-directory");
   const starLinkEl = document.getElementById("star-link");
@@ -250,14 +251,14 @@
     artifactAlreadyExists(targetPath).then((exists) => {
       if (exists) {
         downloadJsonButton.disabled = true;
-        openUploadButton.disabled = true;
-        setStatus("Already submitted", "This artifact already exists in the results repository. No upload is needed.", "success");
+        createResultFileButton.disabled = true;
+        setStatus("Already submitted", "This artifact already exists in the results repository. No submission is needed.", "success");
         return;
       }
 
       downloadJsonButton.disabled = false;
-      openUploadButton.disabled = false;
-      setStatus("Ready to submit", "Download the JSON artifact, then upload it to GitHub.", "success");
+      createResultFileButton.disabled = false;
+      setStatus("Ready to submit", "Download the JSON artifact, then create a result file in GitHub and paste the JSON into the GitHub editor.", "success");
     });
   }
 
@@ -325,10 +326,10 @@
     URL.revokeObjectURL(url);
   });
 
-  openUploadButton.addEventListener("click", () => {
-    if (!targetDirectory) return;
-    const uploadUrl = "https://github.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/upload/" + TARGET_BRANCH + "/" + encodeURI(targetDirectory);
-    window.open(uploadUrl, "_blank", "noopener");
+  createResultFileButton.addEventListener("click", () => {
+    if (!targetDirectory || !artifactFilename) return;
+    const createFileUrl = "https://github.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/new/" + TARGET_BRANCH + "/" + encodeURI(targetDirectory) + "?filename=" + encodeURIComponent(artifactFilename);
+    window.open(createFileUrl, "_blank", "noopener");
   });
 
   run();
