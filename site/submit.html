@@ -114,7 +114,7 @@
 
     <section id="submit-card" class="card submit-card" hidden>
       <h2>Submit to GitHub</h2>
-      <p class="muted">Submit your HammerDB result through GitHub for open review and publication in the TPC-OSS results repository. Click “Continue to GitHub”. GitHub will open with the result file path already filled in. Paste or drag the saved HammerDB result artifact into the GitHub editor, then click “Commit changes” and follow the GitHub prompts to open a pull request.</p>
+      <p class="muted">Submit your HammerDB result through GitHub for open review and publication in the TPC-OSS results repository. Click “Continue to GitHub”. Paste or drag the saved HammerDB result artifact into the GitHub editor, then follow the prompts to open a pull request for review.</p>
       <div class="meta">
         <div><strong>File name</strong><span id="artifact-filename">—</span></div>
         <div><strong>Target folder</strong><span id="target-directory">—</span></div>
@@ -279,7 +279,7 @@
       }
 
       createResultFileButton.disabled = false;
-      setStatus("Ready to submit", "Validation passed. Continue to GitHub. GitHub will open with the result file path already filled in.", "success");
+      setStatus("Ready to submit", "Validation passed. Continue to GitHub. The result file path will already be prepared.", "success");
     }).catch(() => {
       createResultFileButton.disabled = true;
       setStatus("Repository check failed", "The submission page could not check whether this result artifact already exists. Please try again before continuing to GitHub.", "error");
