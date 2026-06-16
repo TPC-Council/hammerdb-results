@@ -20,9 +20,11 @@ From a HammerDB benchmark report, use **Share with TPC-OSS**.
 The submit page will:
 
 1. Load and preview the result artifact.
-2. Download the JSON artifact.
-3. Open the correct GitHub upload folder.
-4. Allow the artifact to be submitted for review.
+2. Ask you to sign in to GitHub.
+3. Download the JSON artifact.
+4. Open GitHub’s create-new-file editor for the correct result path with `<jobid>.json` pre-filled.
+5. Ask you to paste the JSON into the GitHub editor and click **Commit changes**.
+6. If you do not have write access, GitHub will fork the repository and guide you to open a pull request.
 
 ## Result artifacts
 

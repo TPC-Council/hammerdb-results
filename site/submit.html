@@ -43,6 +43,8 @@
     .summary-item.metric{background:#fff;border-color:#ddd8cf}
     .submit-card{border:1px solid var(--line-strong)}
     .actions{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 0}
+    .dropzone{border:2px dashed var(--line-strong);border-radius:14px;background:#fff;padding:18px;text-align:center;margin-top:12px}
+    .dropzone.dragover{border-color:var(--blue);background:#eff6ff}
     .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
     .meta div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
     .meta strong{display:block;font-size:.75rem;text-transform:uppercase;color:var(--muted);letter-spacing:.02em}
@@ -79,14 +81,31 @@
         <a id="star-link" class="btn" href="#" target="_blank" rel="noopener"><span class="star">★</span> Star HammerDB</a>
       </article>
       <article class="card">
-        <h2>Submit in two steps</h2>
-        <p><strong>1.</strong> Download the JSON artifact.</p>
-        <p><strong>2.</strong> Upload it to GitHub.</p>
-        <p class="muted small">GitHub records who submitted it, and the maintainer reviews before merge.</p>
+        <h2>Submit with GitHub</h2>
+        <p><strong>1.</strong> Upload or drag and drop the saved HammerDB result artifact to validate it.</p>
+        <p><strong>2.</strong> If validation passes, click <strong>Continue to GitHub</strong>.</p>
+        <p><strong>3.</strong> GitHub will open with the result file path already filled in.</p>
+        <p><strong>4.</strong> Paste or drag the saved HammerDB result artifact into the GitHub editor.</p>
+        <p><strong>5.</strong> Click <strong>Commit changes</strong>, then follow the GitHub prompts to open a pull request.</p>
+        <p class="muted small">GitHub will fork the repository and guide you to open a pull request.</p>
+        <p class="muted small">Results are submitted through GitHub for open review before publication in the TPC-OSS results repository.</p>
       </article>
     </section>
 
     <section id="status" class="status" role="status" aria-live="polite"></section>
+
+    <section id="upload-card" class="card">
+      <h2>Validate saved artifact</h2>
+      <p class="muted">Upload or drag and drop the saved HammerDB result artifact. This page validates the file before continuing to GitHub.</p>
+      <div id="dropzone" class="dropzone">
+        <p><strong>Drop the saved HammerDB result artifact here</strong></p>
+        <p class="muted small">or choose it from your computer.</p>
+        <div class="actions">
+          <button id="choose-artifact" type="button" class="btn">Choose saved artifact</button>
+          <input id="artifact-file" type="file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+    </section>
 
     <section id="preview-card" class="card" hidden>
       <h2>Result preview</h2>
@@ -95,16 +114,14 @@
 
     <section id="submit-card" class="card submit-card" hidden>
       <h2>Submit to GitHub</h2>
-      <p class="muted">Download the artifact, then upload that same file on the GitHub page that opens.</p>
-
+      <p class="muted">Submit your HammerDB result through GitHub for open review and publication in the TPC-OSS results repository. Click “Continue to GitHub”. Paste or drag the saved HammerDB result artifact into the GitHub editor, then follow the prompts to open a pull request for review.</p>
       <div class="meta">
         <div><strong>File name</strong><span id="artifact-filename">—</span></div>
-        <div><strong>Upload folder</strong><span id="target-directory">—</span></div>
+        <div><strong>Target folder</strong><span id="target-directory">—</span></div>
       </div>
 
       <div class="actions">
-        <button id="download-json" type="button" class="btn good" disabled>1. Download JSON</button>
-        <button id="open-upload" type="button" class="btn primary" disabled>2. Open GitHub upload</button>
+        <button id="create-result-file" type="button" class="btn primary" disabled>Continue to GitHub</button>
       </div>
     </section>
 
@@ -123,9 +140,9 @@
 
 <script>
 (function () {
-  const TARGET_OWNER = "sm-shaw";
+  const TARGET_OWNER = "TPC-Council";
   const TARGET_REPO = "hammerdb-results";
-  const TARGET_BRANCH = "master";
+  const TARGET_BRANCH = "main";
   const HAMMERDB_PROJECT_URL = "https://github.com/TPC-Council/HammerDB";
 
   const statusEl = document.getElementById("status");
@@ -134,8 +151,10 @@
   const submitCardEl = document.getElementById("submit-card");
   const artifactUrlEl = document.getElementById("artifact-url");
   const rawEl = document.getElementById("raw-json");
-  const downloadJsonButton = document.getElementById("download-json");
-  const openUploadButton = document.getElementById("open-upload");
+  const createResultFileButton = document.getElementById("create-result-file");
+  const chooseArtifactButton = document.getElementById("choose-artifact");
+  const artifactFileInput = document.getElementById("artifact-file");
+  const dropzoneEl = document.getElementById("dropzone");
   const artifactFilenameEl = document.getElementById("artifact-filename");
   const targetDirectoryEl = document.getElementById("target-directory");
   const starLinkEl = document.getElementById("star-link");
@@ -202,12 +221,17 @@
 
   async function artifactAlreadyExists(path) {
     const rawUrl = "https://raw.githubusercontent.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/" + TARGET_BRANCH + "/" + path;
-    try {
-      const response = await fetch(rawUrl, { method: "HEAD", cache: "no-store" });
-      return response.ok;
-    } catch (err) {
+    const response = await fetch(rawUrl, { method: "GET", cache: "no-store" });
+
+    if (response.status === 200) {
+      return true;
+    }
+
+    if (response.status === 404) {
       return false;
     }
+
+    throw new Error("Could not check whether this result artifact already exists.");
   }
 
   function prepareSubmission(job, result) {
@@ -249,16 +273,64 @@
 
     artifactAlreadyExists(targetPath).then((exists) => {
       if (exists) {
-        downloadJsonButton.disabled = true;
-        openUploadButton.disabled = true;
-        setStatus("Already submitted", "This artifact already exists in the results repository. No upload is needed.", "success");
+        createResultFileButton.disabled = true;
+        setStatus("Already submitted", "This HammerDB result artifact already exists in the results repository. No submission is needed.", "success");
         return;
       }
 
-      downloadJsonButton.disabled = false;
-      openUploadButton.disabled = false;
-      setStatus("Ready to submit", "Download the JSON artifact, then upload it to GitHub.", "success");
+      createResultFileButton.disabled = false;
+      setStatus("Ready to submit", "Validation passed. Continue to GitHub. The result file path will already be prepared.", "success");
+    }).catch(() => {
+      createResultFileButton.disabled = true;
+      setStatus("Repository check failed", "The submission page could not check whether this result artifact already exists. Please try again before continuing to GitHub.", "error");
     });
+  }
+
+  function resetSubmissionState() {
+    previewEl.replaceChildren();
+    previewCardEl.hidden = true;
+    submitCardEl.hidden = true;
+    createResultFileButton.disabled = true;
+    targetPath = "";
+    targetDirectory = "";
+    artifactFilename = "";
+    artifactFilenameEl.textContent = "—";
+    targetDirectoryEl.textContent = "—";
+  }
+
+  function validateArtifact(rawText) {
+    resetSubmissionState();
+    let artifact;
+    try {
+      artifact = JSON.parse(rawText);
+    } catch (err) {
+      rawEl.textContent = rawText;
+      setStatus("Invalid artifact", "The selected file could not be parsed. Choose the saved HammerDB result artifact and try again.", "error");
+      return;
+    }
+
+    rawJson = JSON.stringify(artifact, null, 2);
+    rawEl.textContent = rawJson;
+
+    const job = artifact.job || {};
+    const result = artifact.result || {};
+    const required = ["jobid", "benchmark", "database", "database_display", "timestamp", "hdb_version"];
+    const missing = required.filter((field) => !job[field]);
+
+    if (missing.length > 0) {
+      setStatus("Artifact is missing required fields", missing.join(", "), "error");
+      return;
+    }
+
+    prepareSubmission(job, result);
+  }
+
+  async function validateFile(file) {
+    if (!file) return;
+    artifactUrlEl.textContent = "Uploaded file: " + file.name;
+    setStatus("Validating artifact", "Checking the saved HammerDB result artifact…", "");
+    const rawText = await file.text();
+    validateArtifact(rawText);
   }
 
   async function run() {
@@ -266,7 +338,7 @@
     const artifactUrl = params.get("artifact_url");
 
     if (!artifactUrl) {
-      setStatus("Missing artifact URL", "Open this page from HammerDB using Share with TPC-OSS.", "error");
+      setStatus("Ready to validate", "Upload or drag and drop the saved HammerDB result artifact to validate it before continuing to GitHub.", "");
       return;
     }
 
@@ -287,48 +359,36 @@
     }
 
     const rawText = await response.text();
-    let artifact;
-    try {
-      artifact = JSON.parse(rawText);
-    } catch (err) {
-      rawEl.textContent = rawText;
-      setStatus("Invalid JSON", "The fetched content is not valid JSON.", "error");
-      return;
-    }
-
-    rawJson = JSON.stringify(artifact, null, 2);
-    rawEl.textContent = rawJson;
-
-    const job = artifact.job || {};
-    const result = artifact.result || {};
-    const required = ["jobid", "benchmark", "database", "database_display", "timestamp", "hdb_version"];
-    const missing = required.filter((field) => !job[field]);
-
-    if (missing.length > 0) {
-      setStatus("Artifact is missing required fields", missing.join(", "), "error");
-      return;
-    }
-
-    prepareSubmission(job, result);
+    validateArtifact(rawText);
   }
 
-  downloadJsonButton.addEventListener("click", () => {
-    if (!rawJson || !artifactFilename) return;
-    const blob = new Blob([rawJson + "\n"], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = artifactFilename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+  chooseArtifactButton.addEventListener("click", () => {
+    artifactFileInput.click();
   });
 
-  openUploadButton.addEventListener("click", () => {
-    if (!targetDirectory) return;
-    const uploadUrl = "https://github.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/upload/" + TARGET_BRANCH + "/" + encodeURI(targetDirectory);
-    window.open(uploadUrl, "_blank", "noopener");
+  artifactFileInput.addEventListener("change", () => {
+    validateFile(artifactFileInput.files[0]);
+  });
+
+  dropzoneEl.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    dropzoneEl.classList.add("dragover");
+  });
+
+  dropzoneEl.addEventListener("dragleave", () => {
+    dropzoneEl.classList.remove("dragover");
+  });
+
+  dropzoneEl.addEventListener("drop", (event) => {
+    event.preventDefault();
+    dropzoneEl.classList.remove("dragover");
+    validateFile(event.dataTransfer.files[0]);
+  });
+
+  createResultFileButton.addEventListener("click", () => {
+    if (!targetDirectory || !artifactFilename) return;
+    const createFileUrl = "https://github.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/new/" + TARGET_BRANCH + "/" + encodeURI(targetDirectory) + "?filename=" + encodeURIComponent(artifactFilename);
+    window.open(createFileUrl, "_blank", "noopener");
   });
 
   run();
