@@ -163,6 +163,7 @@
   let targetDirectory = "";
   let artifactFilename = "";
   let rawJson = "";
+  let validationRequestId = 0;
 
   starLinkEl.href = HAMMERDB_PROJECT_URL;
 
@@ -234,6 +235,16 @@
     throw new Error("Could not check whether this result artifact already exists.");
   }
 
+  function enableGitHubSubmission() {
+    submitCardEl.hidden = false;
+    createResultFileButton.disabled = false;
+  }
+
+  function blockGitHubSubmission() {
+    submitCardEl.hidden = true;
+    createResultFileButton.disabled = true;
+  }
+
   function prepareSubmission(job, result) {
     previewEl.replaceChildren();
 
@@ -269,28 +280,37 @@
     targetDirectoryEl.textContent = targetDirectory;
 
     previewCardEl.hidden = false;
-    submitCardEl.hidden = false;
+    blockGitHubSubmission();
+    setStatus("Checking for duplicates", "Checking whether this HammerDB result artifact has already been submitted…", "");
 
+    const requestId = ++validationRequestId;
     artifactAlreadyExists(targetPath).then((exists) => {
+      if (requestId !== validationRequestId) return;
+
       if (exists) {
-        createResultFileButton.disabled = true;
-        setStatus("Already submitted", "This HammerDB result artifact already exists in the results repository. No submission is needed.", "success");
+        blockGitHubSubmission();
+        setStatus("Already submitted", "This HammerDB result artifact already exists in the results repository. No submission is needed.", "error");
         return;
       }
 
-      createResultFileButton.disabled = false;
-      setStatus("Ready to submit", "Validation passed. Continue to GitHub. The result file path will already be prepared.", "success");
+      enableGitHubSubmission();
+      setStatus("Ready to submit", "Validation passed. Continue to GitHub. GitHub will open with the result file path already filled in.", "success");
     }).catch(() => {
-      createResultFileButton.disabled = true;
-      setStatus("Repository check failed", "The submission page could not check whether this result artifact already exists. Please try again before continuing to GitHub.", "error");
+      if (requestId !== validationRequestId) return;
+      blockGitHubSubmission();
+      setStatus(
+        "Repository check failed",
+        "The submission page could not check whether this result artifact already exists. Please try again before continuing to GitHub.",
+        "error"
+      );
     });
   }
 
   function resetSubmissionState() {
     previewEl.replaceChildren();
     previewCardEl.hidden = true;
-    submitCardEl.hidden = true;
-    createResultFileButton.disabled = true;
+    blockGitHubSubmission();
+    validationRequestId++;
     targetPath = "";
     targetDirectory = "";
     artifactFilename = "";
@@ -387,7 +407,7 @@
 
   createResultFileButton.addEventListener("click", () => {
     if (!targetDirectory || !artifactFilename) return;
-    const createFileUrl = "https://github.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/new/" + TARGET_BRANCH + "/" + encodeURI(targetDirectory) + "?filename=" + encodeURIComponent(artifactFilename);
+    const createFileUrl = "https://github.com/" + TARGET_OWNER + "/" + TARGET_REPO + "/new/" + TARGET_BRANCH + "?filename=" + encodeURIComponent(targetDirectory + "/" + artifactFilename);
     window.open(createFileUrl, "_blank", "noopener");
   });
 
