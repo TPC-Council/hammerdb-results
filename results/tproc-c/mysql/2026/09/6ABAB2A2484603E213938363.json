@@ -1,0 +1,1130 @@
+{
+  "schema": "hammerdb-job-report-v1",
+  "description": "HammerDB benchmark result artifact. Machine-readable data, report_hints and analysis_hints are included for reproducible reporting, summary tables and chart generation.",
+  "artifact": {
+    "type": "hammerdb-result-json",
+    "schema": "hammerdb-job-report-v1",
+    "source": "HammerDB",
+    "generated_by": "HammerDB jobs summaryjson",
+    "visibility": "public",
+    "redacted": true
+  },
+  "disclaimer": {
+    "result_type": "HammerDB result artifact",
+    "audited": false,
+    "text": "This is a HammerDB result artifact. HammerDB TPROC-C and TPROC-H workloads are derived from the TPC-C and TPC-H specifications respectively. This result is not audited by the TPC-Council and is not a TPC result.",
+    "tpc_trademarks": "TPC-C, tpmC, TPC-H and QphH are trademarks of the Transaction Processing Performance Council. Unauthorised and unaudited use of official TPC result trademarks is not permitted.",
+    "hammerdb_copyright": "HammerDB is open source software distributed under the GNU General Public License (GPL). HammerDB source code, TPROC-C and TPROC-H workload implementations, documentation and related materials are copyright HammerDB Ltd. NOPM, TPROC-C and TPROC-H are HammerDB benchmark terminology.",
+    "learn_more_tpc": "https://www.tpc.org/",
+    "learn_more_hammerdb": "https://www.hammerdb.com/"
+  },
+  "report_hints": {
+    "title": "MySQL TPROC-C Benchmark Report",
+    "intended_use": "Use this JSON to generate benchmark reports, summary tables, charts and public result artifact pages.",
+    "primary_result_metrics": [
+      "NOPM",
+      "TPM"
+    ],
+    "recommended_charts": [
+      {
+        "title": "MySQL TPROC-C Result",
+        "chart_type": "bar",
+        "data_path": "result.chart_data",
+        "x": "metric",
+        "y": "value"
+      },
+      {
+        "title": "MySQL TPROC-C Transaction Count",
+        "chart_type": "line",
+        "data_path": "transaction_count.series[].points",
+        "x": "timestamp",
+        "y": "value"
+      },
+      {
+        "title": "MySQL TPROC-C Response Times",
+        "chart_type": "boxplot",
+        "data_path": "response_times.rows",
+        "category": "name",
+        "values": [
+          "p25_ms",
+          "p50_ms",
+          "p75_ms",
+          "p95_ms",
+          "p99_ms"
+        ]
+      },
+      {
+        "title": "MySQL CPU %",
+        "chart_type": "line",
+        "data_path": "metrics.cpu_percent",
+        "x": "timestamp",
+        "y_series": [
+          "usr_pct",
+          "sys_pct",
+          "irq_pct",
+          "idle_pct"
+        ]
+      },
+      {
+        "title": "MySQL IOPS",
+        "chart_type": "line",
+        "data_path": "metrics.iops",
+        "x": "timestamp",
+        "y": "value"
+      },
+      {
+        "title": "MySQL MB/s",
+        "chart_type": "line",
+        "data_path": "metrics.mbps",
+        "x": "timestamp",
+        "y": "value"
+      }
+    ],
+    "notes": [
+      "For TPROC-C, final low transaction_count values may be the end-of-test shutdown tail rather than steady-state throughput.",
+      "Use database_display for human-readable report headings and database for HammerDB internal identifiers."
+    ]
+  },
+  "analysis_hints": {
+    "active_window": {
+      "available": true,
+      "start": "2026-09-28 18:32:12",
+      "end": "2026-09-28 18:39:12",
+      "method": "First to last transaction_count value above shutdown-tail threshold.",
+      "transaction_count_min_active_value": 1000,
+      "recommended_filter": "For charts and narrative summaries, filter transaction_count, CPU, IOPS and MB/s to this active_window."
+    },
+    "shutdown_tail": {
+      "present": true,
+      "threshold": 1000,
+      "note": "Repeated low transaction_count, IOPS and MB/s values after active_window.end are usually the end-of-test shutdown tail and should normally be excluded from charts and summaries."
+    }
+  },
+  "job": {
+    "jobid": "6ABAB2A2484603E213938363",
+    "hdb_version": "v6.0",
+    "database": "MySQL",
+    "database_display": "MySQL",
+    "release": "8.4.11",
+    "benchmark": "TPROC-C",
+    "timestamp": "2026-09-28 18:32:02"
+  },
+  "benchmark_config": {
+    "warehouses": 1000,
+    "virtual_users": 128,
+    "rampup_minutes": 2,
+    "duration_minutes": 5
+  },
+  "system": {
+    "available": true,
+    "hostname": "localhost",
+    "cpumodel": "Intel(R) Xeon(R) 6975P-C",
+    "cpucount": "96",
+    "system_vendor": "Amazon EC2",
+    "system_type": "c8id.24xlarge",
+    "os_name": "Ubuntu 24.04.5 LTS",
+    "memory": "185.8 GB",
+    "nic": "enp71s0 (Unknown)",
+    "storage": "Amazon Elastic Block Store (50 GB); Amazon EC2 NVMe Instance Storage (2654 GB); Amazon EC2 NVMe Instance Storage (2654 GB)",
+    "cloud_instance": "AWS c8id.24xlarge"
+  },
+  "result": {
+    "type": "tproc_c_result",
+    "database_display": "MySQL",
+    "active_virtual_users": 128,
+    "nopm": 1770412,
+    "tpm": 4114363,
+    "chart_data": [
+      {
+        "metric": "NOPM",
+        "value": 1770412
+      },
+      {
+        "metric": "TPM",
+        "value": 4114363
+      }
+    ]
+  },
+  "transaction_count": {
+    "available": true,
+    "series": [
+      {
+        "name": "MySQL tpm",
+        "database": "MySQL",
+        "database_display": "MySQL",
+        "metric": "tpm",
+        "points": [
+          {
+            "timestamp": "2026-09-28 18:32:02",
+            "value": 0
+          },
+          {
+            "timestamp": "2026-09-28 18:32:12",
+            "value": 615672
+          },
+          {
+            "timestamp": "2026-09-28 18:32:22",
+            "value": 1872000
+          },
+          {
+            "timestamp": "2026-09-28 18:32:32",
+            "value": 2999934
+          },
+          {
+            "timestamp": "2026-09-28 18:32:42",
+            "value": 3396090
+          },
+          {
+            "timestamp": "2026-09-28 18:32:52",
+            "value": 4047396
+          },
+          {
+            "timestamp": "2026-09-28 18:33:02",
+            "value": 4178724
+          },
+          {
+            "timestamp": "2026-09-28 18:33:12",
+            "value": 4065750
+          },
+          {
+            "timestamp": "2026-09-28 18:33:22",
+            "value": 4145016
+          },
+          {
+            "timestamp": "2026-09-28 18:33:32",
+            "value": 4079364
+          },
+          {
+            "timestamp": "2026-09-28 18:33:42",
+            "value": 3976674
+          },
+          {
+            "timestamp": "2026-09-28 18:33:52",
+            "value": 4050558
+          },
+          {
+            "timestamp": "2026-09-28 18:34:02",
+            "value": 4027134
+          },
+          {
+            "timestamp": "2026-09-28 18:34:12",
+            "value": 3925830
+          },
+          {
+            "timestamp": "2026-09-28 18:34:22",
+            "value": 3959868
+          },
+          {
+            "timestamp": "2026-09-28 18:34:32",
+            "value": 4154490
+          },
+          {
+            "timestamp": "2026-09-28 18:34:42",
+            "value": 4139646
+          },
+          {
+            "timestamp": "2026-09-28 18:34:52",
+            "value": 4140390
+          },
+          {
+            "timestamp": "2026-09-28 18:35:02",
+            "value": 4141026
+          },
+          {
+            "timestamp": "2026-09-28 18:35:12",
+            "value": 4156752
+          },
+          {
+            "timestamp": "2026-09-28 18:35:22",
+            "value": 4129260
+          },
+          {
+            "timestamp": "2026-09-28 18:35:32",
+            "value": 4144662
+          },
+          {
+            "timestamp": "2026-09-28 18:35:42",
+            "value": 4134786
+          },
+          {
+            "timestamp": "2026-09-28 18:35:52",
+            "value": 4138710
+          },
+          {
+            "timestamp": "2026-09-28 18:36:02",
+            "value": 4118844
+          },
+          {
+            "timestamp": "2026-09-28 18:36:12",
+            "value": 4128108
+          },
+          {
+            "timestamp": "2026-09-28 18:36:22",
+            "value": 4134336
+          },
+          {
+            "timestamp": "2026-09-28 18:36:32",
+            "value": 4124250
+          },
+          {
+            "timestamp": "2026-09-28 18:36:42",
+            "value": 4122216
+          },
+          {
+            "timestamp": "2026-09-28 18:36:52",
+            "value": 4098180
+          },
+          {
+            "timestamp": "2026-09-28 18:37:02",
+            "value": 4112700
+          },
+          {
+            "timestamp": "2026-09-28 18:37:12",
+            "value": 4125672
+          },
+          {
+            "timestamp": "2026-09-28 18:37:22",
+            "value": 4140894
+          },
+          {
+            "timestamp": "2026-09-28 18:37:32",
+            "value": 4109634
+          },
+          {
+            "timestamp": "2026-09-28 18:37:42",
+            "value": 4141464
+          },
+          {
+            "timestamp": "2026-09-28 18:37:52",
+            "value": 4135350
+          },
+          {
+            "timestamp": "2026-09-28 18:38:02",
+            "value": 4104882
+          },
+          {
+            "timestamp": "2026-09-28 18:38:12",
+            "value": 4124904
+          },
+          {
+            "timestamp": "2026-09-28 18:38:22",
+            "value": 4121706
+          },
+          {
+            "timestamp": "2026-09-28 18:38:32",
+            "value": 4127076
+          },
+          {
+            "timestamp": "2026-09-28 18:38:42",
+            "value": 4126956
+          },
+          {
+            "timestamp": "2026-09-28 18:38:52",
+            "value": 4123272
+          },
+          {
+            "timestamp": "2026-09-28 18:39:02",
+            "value": 4108734
+          },
+          {
+            "timestamp": "2026-09-28 18:39:12",
+            "value": 428778
+          },
+          {
+            "timestamp": "2026-09-28 18:39:22",
+            "value": 0
+          },
+          {
+            "timestamp": "2026-09-28 18:39:32",
+            "value": 0
+          }
+        ]
+      }
+    ]
+  },
+  "response_times": {
+    "type": "boxplot",
+    "unit": "milliseconds",
+    "rows": [
+      {
+        "name": "NEWORD",
+        "elapsed_ms": 388276.5,
+        "calls": 11980920,
+        "min_ms": 0.413,
+        "avg_ms": 1.888,
+        "max_ms": 220.678,
+        "total_ms": 22625803.25,
+        "p99_ms": 4.635,
+        "p95_ms": 3.182,
+        "p75_ms": 2.175,
+        "p50_ms": 1.707,
+        "p25_ms": 1.352,
+        "sd": 1.54,
+        "ratio_pct": 45.525
+      },
+      {
+        "name": "PAYMENT",
+        "elapsed_ms": 388276.5,
+        "calls": 11985150,
+        "min_ms": 0.272,
+        "avg_ms": 1.308,
+        "max_ms": 169.931,
+        "total_ms": 15676128.742,
+        "p99_ms": 3.732,
+        "p95_ms": 2.455,
+        "p75_ms": 1.579,
+        "p50_ms": 1.136,
+        "p25_ms": 0.791,
+        "sd": 1.222,
+        "ratio_pct": 31.542
+      },
+      {
+        "name": "DELIVERY",
+        "elapsed_ms": 388276.5,
+        "calls": 1198113,
+        "min_ms": 1.521,
+        "avg_ms": 5.889,
+        "max_ms": 190.558,
+        "total_ms": 7055451.466,
+        "p99_ms": 20.57,
+        "p95_ms": 9.884,
+        "p75_ms": 6.142,
+        "p50_ms": 5.029,
+        "p25_ms": 4.437,
+        "sd": 4.256,
+        "ratio_pct": 14.196
+      },
+      {
+        "name": "SLEV",
+        "elapsed_ms": 388276.5,
+        "calls": 1199422,
+        "min_ms": 0.439,
+        "avg_ms": 1.928,
+        "max_ms": 163.924,
+        "total_ms": 2312447.559,
+        "p99_ms": 4.134,
+        "p95_ms": 3.026,
+        "p75_ms": 2.133,
+        "p50_ms": 1.817,
+        "p25_ms": 1.597,
+        "sd": 0.678,
+        "ratio_pct": 4.653
+      },
+      {
+        "name": "OSTAT",
+        "elapsed_ms": 388276.5,
+        "calls": 1199343,
+        "min_ms": 0.181,
+        "avg_ms": 0.885,
+        "max_ms": 86.161,
+        "total_ms": 1062012.937,
+        "p99_ms": 2.619,
+        "p95_ms": 1.884,
+        "p75_ms": 0.948,
+        "p50_ms": 0.738,
+        "p25_ms": 0.614,
+        "sd": 0.476,
+        "ratio_pct": 2.137
+      }
+    ]
+  },
+  "metrics": {
+    "available": true,
+    "cpu_percent": [
+      {
+        "timestamp": "2026-09-28 18:32:12",
+        "usr_pct": 7.17,
+        "sys_pct": 1.44,
+        "irq_pct": 0.0,
+        "idle_pct": 88.3
+      },
+      {
+        "timestamp": "2026-09-28 18:32:22",
+        "usr_pct": 26.13,
+        "sys_pct": 2.98,
+        "irq_pct": 0.0,
+        "idle_pct": 69.15
+      },
+      {
+        "timestamp": "2026-09-28 18:32:32",
+        "usr_pct": 48.43,
+        "sys_pct": 4.34,
+        "irq_pct": 0.0,
+        "idle_pct": 45.85
+      },
+      {
+        "timestamp": "2026-09-28 18:32:42",
+        "usr_pct": 60.82,
+        "sys_pct": 4.88,
+        "irq_pct": 0.0,
+        "idle_pct": 33.21
+      },
+      {
+        "timestamp": "2026-09-28 18:32:52",
+        "usr_pct": 78.07,
+        "sys_pct": 4.84,
+        "irq_pct": 0.0,
+        "idle_pct": 16.05
+      },
+      {
+        "timestamp": "2026-09-28 18:33:02",
+        "usr_pct": 80.62,
+        "sys_pct": 4.63,
+        "irq_pct": 0.0,
+        "idle_pct": 14.44
+      },
+      {
+        "timestamp": "2026-09-28 18:33:12",
+        "usr_pct": 79.19,
+        "sys_pct": 4.79,
+        "irq_pct": 0.0,
+        "idle_pct": 15.81
+      },
+      {
+        "timestamp": "2026-09-28 18:33:22",
+        "usr_pct": 80.39,
+        "sys_pct": 4.98,
+        "irq_pct": 0.0,
+        "idle_pct": 14.45
+      },
+      {
+        "timestamp": "2026-09-28 18:33:32",
+        "usr_pct": 79.49,
+        "sys_pct": 5.04,
+        "irq_pct": 0.0,
+        "idle_pct": 15.26
+      },
+      {
+        "timestamp": "2026-09-28 18:33:42",
+        "usr_pct": 77.96,
+        "sys_pct": 5.08,
+        "irq_pct": 0.0,
+        "idle_pct": 16.44
+      },
+      {
+        "timestamp": "2026-09-28 18:33:52",
+        "usr_pct": 79.03,
+        "sys_pct": 5.13,
+        "irq_pct": 0.0,
+        "idle_pct": 15.64
+      },
+      {
+        "timestamp": "2026-09-28 18:34:02",
+        "usr_pct": 78.64,
+        "sys_pct": 5.15,
+        "irq_pct": 0.0,
+        "idle_pct": 15.94
+      },
+      {
+        "timestamp": "2026-09-28 18:34:12",
+        "usr_pct": 76.57,
+        "sys_pct": 5.22,
+        "irq_pct": 0.0,
+        "idle_pct": 17.8
+      },
+      {
+        "timestamp": "2026-09-28 18:34:22",
+        "usr_pct": 78.72,
+        "sys_pct": 5.5,
+        "irq_pct": 0.0,
+        "idle_pct": 15.44
+      },
+      {
+        "timestamp": "2026-09-28 18:34:32",
+        "usr_pct": 81.52,
+        "sys_pct": 5.68,
+        "irq_pct": 0.0,
+        "idle_pct": 12.65
+      },
+      {
+        "timestamp": "2026-09-28 18:34:42",
+        "usr_pct": 81.18,
+        "sys_pct": 6.0,
+        "irq_pct": 0.0,
+        "idle_pct": 12.67
+      },
+      {
+        "timestamp": "2026-09-28 18:34:52",
+        "usr_pct": 81.17,
+        "sys_pct": 6.06,
+        "irq_pct": 0.0,
+        "idle_pct": 12.61
+      },
+      {
+        "timestamp": "2026-09-28 18:35:02",
+        "usr_pct": 81.13,
+        "sys_pct": 6.11,
+        "irq_pct": 0.0,
+        "idle_pct": 12.59
+      },
+      {
+        "timestamp": "2026-09-28 18:35:12",
+        "usr_pct": 81.61,
+        "sys_pct": 5.87,
+        "irq_pct": 0.0,
+        "idle_pct": 12.37
+      },
+      {
+        "timestamp": "2026-09-28 18:35:22",
+        "usr_pct": 81.11,
+        "sys_pct": 6.01,
+        "irq_pct": 0.0,
+        "idle_pct": 12.74
+      },
+      {
+        "timestamp": "2026-09-28 18:35:32",
+        "usr_pct": 81.54,
+        "sys_pct": 5.8,
+        "irq_pct": 0.0,
+        "idle_pct": 12.5
+      },
+      {
+        "timestamp": "2026-09-28 18:35:42",
+        "usr_pct": 81.1,
+        "sys_pct": 5.98,
+        "irq_pct": 0.0,
+        "idle_pct": 12.77
+      },
+      {
+        "timestamp": "2026-09-28 18:35:52",
+        "usr_pct": 81.11,
+        "sys_pct": 6.07,
+        "irq_pct": 0.0,
+        "idle_pct": 12.67
+      },
+      {
+        "timestamp": "2026-09-28 18:36:02",
+        "usr_pct": 80.69,
+        "sys_pct": 6.27,
+        "irq_pct": 0.0,
+        "idle_pct": 12.89
+      },
+      {
+        "timestamp": "2026-09-28 18:36:12",
+        "usr_pct": 81.27,
+        "sys_pct": 5.97,
+        "irq_pct": 0.0,
+        "idle_pct": 12.6
+      },
+      {
+        "timestamp": "2026-09-28 18:36:22",
+        "usr_pct": 81.19,
+        "sys_pct": 5.98,
+        "irq_pct": 0.0,
+        "idle_pct": 12.69
+      },
+      {
+        "timestamp": "2026-09-28 18:36:32",
+        "usr_pct": 80.97,
+        "sys_pct": 6.02,
+        "irq_pct": 0.0,
+        "idle_pct": 12.86
+      },
+      {
+        "timestamp": "2026-09-28 18:36:42",
+        "usr_pct": 81.08,
+        "sys_pct": 6.07,
+        "irq_pct": 0.0,
+        "idle_pct": 12.68
+      },
+      {
+        "timestamp": "2026-09-28 18:36:52",
+        "usr_pct": 80.35,
+        "sys_pct": 6.2,
+        "irq_pct": 0.0,
+        "idle_pct": 13.31
+      },
+      {
+        "timestamp": "2026-09-28 18:37:02",
+        "usr_pct": 80.64,
+        "sys_pct": 6.1,
+        "irq_pct": 0.0,
+        "idle_pct": 13.11
+      },
+      {
+        "timestamp": "2026-09-28 18:37:12",
+        "usr_pct": 81.13,
+        "sys_pct": 6.03,
+        "irq_pct": 0.0,
+        "idle_pct": 12.66
+      },
+      {
+        "timestamp": "2026-09-28 18:37:22",
+        "usr_pct": 81.45,
+        "sys_pct": 5.91,
+        "irq_pct": 0.0,
+        "idle_pct": 12.48
+      },
+      {
+        "timestamp": "2026-09-28 18:37:32",
+        "usr_pct": 80.91,
+        "sys_pct": 6.03,
+        "irq_pct": 0.0,
+        "idle_pct": 12.92
+      },
+      {
+        "timestamp": "2026-09-28 18:37:42",
+        "usr_pct": 81.13,
+        "sys_pct": 5.98,
+        "irq_pct": 0.0,
+        "idle_pct": 12.74
+      },
+      {
+        "timestamp": "2026-09-28 18:37:52",
+        "usr_pct": 80.89,
+        "sys_pct": 6.09,
+        "irq_pct": 0.0,
+        "idle_pct": 12.85
+      },
+      {
+        "timestamp": "2026-09-28 18:38:02",
+        "usr_pct": 80.57,
+        "sys_pct": 6.12,
+        "irq_pct": 0.0,
+        "idle_pct": 13.15
+      },
+      {
+        "timestamp": "2026-09-28 18:38:12",
+        "usr_pct": 80.82,
+        "sys_pct": 6.1,
+        "irq_pct": 0.0,
+        "idle_pct": 12.92
+      },
+      {
+        "timestamp": "2026-09-28 18:38:22",
+        "usr_pct": 80.82,
+        "sys_pct": 6.1,
+        "irq_pct": 0.0,
+        "idle_pct": 12.93
+      },
+      {
+        "timestamp": "2026-09-28 18:38:32",
+        "usr_pct": 81.06,
+        "sys_pct": 5.93,
+        "irq_pct": 0.0,
+        "idle_pct": 12.84
+      },
+      {
+        "timestamp": "2026-09-28 18:38:42",
+        "usr_pct": 81.14,
+        "sys_pct": 6.08,
+        "irq_pct": 0.0,
+        "idle_pct": 12.62
+      },
+      {
+        "timestamp": "2026-09-28 18:38:52",
+        "usr_pct": 81.02,
+        "sys_pct": 6.0,
+        "irq_pct": 0.0,
+        "idle_pct": 12.82
+      },
+      {
+        "timestamp": "2026-09-28 18:39:02",
+        "usr_pct": 80.71,
+        "sys_pct": 6.15,
+        "irq_pct": 0.0,
+        "idle_pct": 12.98
+      },
+      {
+        "timestamp": "2026-09-28 18:39:12",
+        "usr_pct": 2.37,
+        "sys_pct": 0.56,
+        "irq_pct": 0.0,
+        "idle_pct": 89.93
+      },
+      {
+        "timestamp": "2026-09-28 18:39:22",
+        "usr_pct": 1.24,
+        "sys_pct": 0.34,
+        "irq_pct": 0.0,
+        "idle_pct": 98.31
+      },
+      {
+        "timestamp": "2026-09-28 18:39:32",
+        "usr_pct": 1.21,
+        "sys_pct": 0.3,
+        "irq_pct": 0.0,
+        "idle_pct": 98.33
+      },
+      {
+        "timestamp": "2026-09-28 18:39:43",
+        "usr_pct": 1.01,
+        "sys_pct": 0.33,
+        "irq_pct": 0.0,
+        "idle_pct": 98.4
+      }
+    ],
+    "iops": [
+      {
+        "timestamp": "2026-09-28 18:32:12",
+        "value": 25091.0
+      },
+      {
+        "timestamp": "2026-09-28 18:32:22",
+        "value": 36604.0
+      },
+      {
+        "timestamp": "2026-09-28 18:32:32",
+        "value": 36269.0
+      },
+      {
+        "timestamp": "2026-09-28 18:32:42",
+        "value": 32482.0
+      },
+      {
+        "timestamp": "2026-09-28 18:32:52",
+        "value": 30955.0
+      },
+      {
+        "timestamp": "2026-09-28 18:33:02",
+        "value": 30155.0
+      },
+      {
+        "timestamp": "2026-09-28 18:33:12",
+        "value": 24899.0
+      },
+      {
+        "timestamp": "2026-09-28 18:33:22",
+        "value": 24543.0
+      },
+      {
+        "timestamp": "2026-09-28 18:33:32",
+        "value": 28012.0
+      },
+      {
+        "timestamp": "2026-09-28 18:33:42",
+        "value": 28632.0
+      },
+      {
+        "timestamp": "2026-09-28 18:33:52",
+        "value": 30013.0
+      },
+      {
+        "timestamp": "2026-09-28 18:34:02",
+        "value": 29388.0
+      },
+      {
+        "timestamp": "2026-09-28 18:34:12",
+        "value": 29574.0
+      },
+      {
+        "timestamp": "2026-09-28 18:34:22",
+        "value": 29092.0
+      },
+      {
+        "timestamp": "2026-09-28 18:34:32",
+        "value": 28370.0
+      },
+      {
+        "timestamp": "2026-09-28 18:34:42",
+        "value": 29629.0
+      },
+      {
+        "timestamp": "2026-09-28 18:34:52",
+        "value": 29323.0
+      },
+      {
+        "timestamp": "2026-09-28 18:35:02",
+        "value": 29932.0
+      },
+      {
+        "timestamp": "2026-09-28 18:35:12",
+        "value": 29860.0
+      },
+      {
+        "timestamp": "2026-09-28 18:35:22",
+        "value": 30043.0
+      },
+      {
+        "timestamp": "2026-09-28 18:35:32",
+        "value": 30174.0
+      },
+      {
+        "timestamp": "2026-09-28 18:35:42",
+        "value": 29802.0
+      },
+      {
+        "timestamp": "2026-09-28 18:35:52",
+        "value": 29771.0
+      },
+      {
+        "timestamp": "2026-09-28 18:36:02",
+        "value": 29446.0
+      },
+      {
+        "timestamp": "2026-09-28 18:36:12",
+        "value": 30403.0
+      },
+      {
+        "timestamp": "2026-09-28 18:36:22",
+        "value": 29660.0
+      },
+      {
+        "timestamp": "2026-09-28 18:36:32",
+        "value": 30162.0
+      },
+      {
+        "timestamp": "2026-09-28 18:36:42",
+        "value": 30531.0
+      },
+      {
+        "timestamp": "2026-09-28 18:36:52",
+        "value": 29304.0
+      },
+      {
+        "timestamp": "2026-09-28 18:37:02",
+        "value": 29293.0
+      },
+      {
+        "timestamp": "2026-09-28 18:37:12",
+        "value": 31155.0
+      },
+      {
+        "timestamp": "2026-09-28 18:37:22",
+        "value": 30369.0
+      },
+      {
+        "timestamp": "2026-09-28 18:37:32",
+        "value": 30198.0
+      },
+      {
+        "timestamp": "2026-09-28 18:37:42",
+        "value": 30249.0
+      },
+      {
+        "timestamp": "2026-09-28 18:37:52",
+        "value": 30681.0
+      },
+      {
+        "timestamp": "2026-09-28 18:38:02",
+        "value": 29832.0
+      },
+      {
+        "timestamp": "2026-09-28 18:38:12",
+        "value": 30097.0
+      },
+      {
+        "timestamp": "2026-09-28 18:38:22",
+        "value": 30224.0
+      },
+      {
+        "timestamp": "2026-09-28 18:38:32",
+        "value": 30031.0
+      },
+      {
+        "timestamp": "2026-09-28 18:38:42",
+        "value": 30772.0
+      },
+      {
+        "timestamp": "2026-09-28 18:38:52",
+        "value": 30469.0
+      },
+      {
+        "timestamp": "2026-09-28 18:39:02",
+        "value": 29702.0
+      },
+      {
+        "timestamp": "2026-09-28 18:39:12",
+        "value": 20909.0
+      },
+      {
+        "timestamp": "2026-09-28 18:39:22",
+        "value": 18705.0
+      },
+      {
+        "timestamp": "2026-09-28 18:39:32",
+        "value": 18305.0
+      },
+      {
+        "timestamp": "2026-09-28 18:39:43",
+        "value": 18140.0
+      }
+    ],
+    "mbps": [
+      {
+        "timestamp": "2026-09-28 18:32:12",
+        "value": 207.85
+      },
+      {
+        "timestamp": "2026-09-28 18:32:22",
+        "value": 429.3
+      },
+      {
+        "timestamp": "2026-09-28 18:32:32",
+        "value": 447.62
+      },
+      {
+        "timestamp": "2026-09-28 18:32:42",
+        "value": 445.28
+      },
+      {
+        "timestamp": "2026-09-28 18:32:52",
+        "value": 442.81
+      },
+      {
+        "timestamp": "2026-09-28 18:33:02",
+        "value": 434.58
+      },
+      {
+        "timestamp": "2026-09-28 18:33:12",
+        "value": 413.41
+      },
+      {
+        "timestamp": "2026-09-28 18:33:22",
+        "value": 410.12
+      },
+      {
+        "timestamp": "2026-09-28 18:33:32",
+        "value": 467.27
+      },
+      {
+        "timestamp": "2026-09-28 18:33:42",
+        "value": 482.12
+      },
+      {
+        "timestamp": "2026-09-28 18:33:52",
+        "value": 496.65
+      },
+      {
+        "timestamp": "2026-09-28 18:34:02",
+        "value": 495.58
+      },
+      {
+        "timestamp": "2026-09-28 18:34:12",
+        "value": 513.48
+      },
+      {
+        "timestamp": "2026-09-28 18:34:22",
+        "value": 518.93
+      },
+      {
+        "timestamp": "2026-09-28 18:34:32",
+        "value": 492.65
+      },
+      {
+        "timestamp": "2026-09-28 18:34:42",
+        "value": 502.16
+      },
+      {
+        "timestamp": "2026-09-28 18:34:52",
+        "value": 498.56
+      },
+      {
+        "timestamp": "2026-09-28 18:35:02",
+        "value": 497.75
+      },
+      {
+        "timestamp": "2026-09-28 18:35:12",
+        "value": 497.78
+      },
+      {
+        "timestamp": "2026-09-28 18:35:22",
+        "value": 500.49
+      },
+      {
+        "timestamp": "2026-09-28 18:35:32",
+        "value": 503.99
+      },
+      {
+        "timestamp": "2026-09-28 18:35:42",
+        "value": 494.98
+      },
+      {
+        "timestamp": "2026-09-28 18:35:52",
+        "value": 495.69
+      },
+      {
+        "timestamp": "2026-09-28 18:36:02",
+        "value": 493.41
+      },
+      {
+        "timestamp": "2026-09-28 18:36:12",
+        "value": 498.36
+      },
+      {
+        "timestamp": "2026-09-28 18:36:22",
+        "value": 494.78
+      },
+      {
+        "timestamp": "2026-09-28 18:36:32",
+        "value": 501.49
+      },
+      {
+        "timestamp": "2026-09-28 18:36:42",
+        "value": 501.38
+      },
+      {
+        "timestamp": "2026-09-28 18:36:52",
+        "value": 487.74
+      },
+      {
+        "timestamp": "2026-09-28 18:37:02",
+        "value": 490.49
+      },
+      {
+        "timestamp": "2026-09-28 18:37:12",
+        "value": 502.71
+      },
+      {
+        "timestamp": "2026-09-28 18:37:22",
+        "value": 498.23
+      },
+      {
+        "timestamp": "2026-09-28 18:37:32",
+        "value": 495.78
+      },
+      {
+        "timestamp": "2026-09-28 18:37:42",
+        "value": 501.3
+      },
+      {
+        "timestamp": "2026-09-28 18:37:52",
+        "value": 498.46
+      },
+      {
+        "timestamp": "2026-09-28 18:38:02",
+        "value": 496.22
+      },
+      {
+        "timestamp": "2026-09-28 18:38:12",
+        "value": 496.11
+      },
+      {
+        "timestamp": "2026-09-28 18:38:22",
+        "value": 496.87
+      },
+      {
+        "timestamp": "2026-09-28 18:38:32",
+        "value": 495.4
+      },
+      {
+        "timestamp": "2026-09-28 18:38:42",
+        "value": 499.48
+      },
+      {
+        "timestamp": "2026-09-28 18:38:52",
+        "value": 502.16
+      },
+      {
+        "timestamp": "2026-09-28 18:39:02",
+        "value": 494.81
+      },
+      {
+        "timestamp": "2026-09-28 18:39:12",
+        "value": 309.96
+      },
+      {
+        "timestamp": "2026-09-28 18:39:22",
+        "value": 290.07
+      },
+      {
+        "timestamp": "2026-09-28 18:39:32",
+        "value": 283.79
+      },
+      {
+        "timestamp": "2026-09-28 18:39:43",
+        "value": 277.16
+      }
+    ]
+  }
+}
