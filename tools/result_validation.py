@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+from urllib.parse import urlparse
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -108,6 +109,95 @@ def _iter_json_files(results_root: Path) -> Iterable[Path]:
     return sorted(results_root.rglob("*.json"))
 
 
+
+GH_USERNAME_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$")
+VALID_WORKLOADS = {"unclassified", "cpu-intensive", "io-intensive"}
+VALID_DURABILITY = {"unknown", "full", "relaxed"}
+
+
+def _validate_submission_metadata(payload: dict, rel_path: Path) -> list[str]:
+    """Optional, additive fields: do not reject unannotated historical artifacts."""
+    errors: list[str] = []
+    label = rel_path.as_posix()
+    if "submission" not in payload:
+        return errors
+
+    submission = payload["submission"]
+    if not isinstance(submission, dict):
+        return [f"{label}: field 'submission' must be an object"]
+
+    username = submission.get("github_username")
+    if (not isinstance(username, str) or not GH_USERNAME_RE.fullmatch(username)
+            or "--" in username):
+        errors.append(f"{label}: field 'submission.github_username' must be a valid GitHub username")
+
+    value = submission.get("description", "")
+    if not isinstance(value, str) or len(value) > 2000:
+        errors.append(f"{label}: field 'submission.description' must be a string of at most 2000 characters")
+
+    company = submission.get("company", {})
+    if not isinstance(company, dict):
+        errors.append(f"{label}: field 'submission.company' must be an object")
+        company = {}
+    for field, limit in (("name", 120), ("logo_url", 500), ("description", 350)):
+        value = company.get(field, "")
+        if not isinstance(value, str) or len(value) > limit:
+            errors.append(f"{label}: field 'submission.company.{field}' must be a string of at most {limit} characters")
+
+    logo = company.get("logo_url", "")
+    if isinstance(logo, str) and logo:
+        try:
+            parsed = urlparse(logo)
+            valid_logo = parsed.scheme == "https" and bool(parsed.hostname) and not parsed.username and not parsed.password
+        except ValueError:
+            valid_logo = False
+        if not valid_logo:
+            errors.append(f"{label}: field 'submission.company.logo_url' must be a public HTTPS URL")
+        if not company.get("name"):
+            errors.append(f"{label}: field 'submission.company.name' is required when providing a logo")
+
+    workload = submission.get("workload")
+    if workload is None:
+        return errors
+    if not isinstance(workload, dict):
+        return errors + [f"{label}: field 'submission.workload' must be an object"]
+
+    classification = workload.get("classification", "unclassified")
+    uaw = workload.get("use_all_warehouses")
+    durability = workload.get("durability", "unknown")
+    details = workload.get("details", "")
+    if not isinstance(classification, str) or classification not in VALID_WORKLOADS:
+        errors.append(f"{label}: invalid submission workload classification")
+    if uaw is not None and type(uaw) is not bool:
+        errors.append(f"{label}: submission workload use_all_warehouses must be true, false or null")
+    if not isinstance(durability, str) or durability not in VALID_DURABILITY:
+        errors.append(f"{label}: invalid submission workload durability")
+    if not isinstance(details, str) or len(details) > 1200:
+        errors.append(f"{label}: submission workload details must be a string of at most 1200 characters")
+        details = ""
+
+    job = payload.get("job")
+    job = job if isinstance(job, dict) else {}
+    cfg = payload.get("benchmark_config") or {}
+    if classification != "unclassified":
+        if job.get("benchmark") != "TPROC-C":
+            errors.append(f"{label}: CPU/I/O classifications are supported only for TPROC-C")
+        if len(details.strip()) < 20:
+            errors.append(f"{label}: classified TPROC-C workload requires configuration evidence (20+ characters)")
+        if classification == "io-intensive" and (uaw is not True or durability != "full"):
+            errors.append(f"{label}: I/O-focused classification requires UAW enabled and full durability")
+        if classification == "cpu-intensive" and (uaw is not False or durability not in ("full", "relaxed")):
+            errors.append(f"{label}: CPU-focused classification requires UAW disabled and declared durability")
+
+    for field in ("use_all_warehouses", "all_warehouses", "uaw"):
+        if not isinstance(cfg, dict) or field not in cfg:
+            continue
+        recorded = cfg.get(field)
+        if type(recorded) is bool and type(uaw) is bool and recorded != uaw:
+            errors.append(f"{label}: declared UAW conflicts with benchmark_config.{field}")
+    return errors
+
+
 def validate_artifacts(repo_root: Path, results_root: Path) -> ValidationResult:
     """Validate all JSON artifacts under results_root without inferring fields from paths."""
     errors: list[str] = []
@@ -134,6 +224,8 @@ def validate_artifacts(repo_root: Path, results_root: Path) -> ValidationResult:
             errors.append(f"{rel_path.as_posix()}: field 'disclaimer' must exist and be an object")
         elif disclaimer.get("audited") is not False:
             errors.append(f"{rel_path.as_posix()}: field 'disclaimer.audited' must be false")
+
+        errors.extend(_validate_submission_metadata(payload, rel_path))
 
         job = payload.get("job")
         if not isinstance(job, dict):

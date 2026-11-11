@@ -29,6 +29,22 @@ jobs:
       - name: Build leaderboard
         run: python tools/build_leaderboard.py
 
+      - name: Set publication repository context
+        env:
+          REPOSITORY: ${{ github.repository }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          owner, repo = os.environ["REPOSITORY"].split("/", 1)
+          data = {"owner": owner, "repo": repo, "branch": os.environ["DEPLOY_BRANCH"]}
+          Path("site/repository-context.js").write_text(
+              "window.HammerDBResultsDeploy = " + json.dumps(data) + ";\n",
+              encoding="utf-8",
+          )
+          PY
+
       - name: Include result artifacts in Pages site
         run: cp -R results site/results
 

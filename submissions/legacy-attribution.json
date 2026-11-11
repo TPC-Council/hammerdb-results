@@ -1,0 +1,39 @@
+{
+  "6A484A99945303E263335303": {
+    "github_username": "raj-rahul51",
+    "pr_url": "https://github.com/TPC-Council/hammerdb-results/pull/5",
+    "pr_description": "Upload HammerDB TPROC-C (TPC-C) benchmark results for Intel Server.\n\nEnvironment:\n- Processor: Intel(R) Xeon(R) Gold 5412U\n- Memory: 125.5 GB\n- Database: MariaDB-12.3.2\n- OS: Ubuntu 24.04.4 LTS"
+  },
+  "6A48B9652EF303E233433333": {
+    "github_username": "raj-rahul51",
+    "pr_url": "https://github.com/TPC-Council/hammerdb-results/pull/6",
+    "pr_description": "Upload HammerDB TPROC-C (TPC-C) benchmark results for AMD Server.\n\nEnvironment:\n- Processor: AMD EPYC 9454P 48-Core Processor\n- Memory: 251.4 GB\n- Database: MariaDB-12.3.2\n- OS: Ubuntu 24.04.4 LTS"
+  },
+  "6A85AA95643103E203639343": {
+    "github_username": "rpbbox",
+    "pr_url": "https://github.com/TPC-Council/hammerdb-results/pull/8",
+    "pr_description": "HammerDB TPROC-C SQL Server artifacts for Intel(R) Xeon(R) Gold 6258R CPU"
+  },
+  "6A8D9FBB829503E283432323": {
+    "github_username": "ls250",
+    "pr_url": "https://github.com/TPC-Council/hammerdb-results/pull/9"
+  },
+  "6A8DAB6F352303E253537323": {
+    "github_username": "ls250",
+    "pr_url": "https://github.com/TPC-Council/hammerdb-results/pull/10"
+  },
+  "6A8DCD3F390F03E263934343": {
+    "github_username": "ls250",
+    "pr_url": "https://github.com/TPC-Council/hammerdb-results/pull/11"
+  },
+  "6ABAB2A2484603E213938363": {
+    "github_username": "vadimtk",
+    "pr_url": "https://github.com/TPC-Council/hammerdb-results/pull/13",
+    "pr_description": "results with Percona Server 8.4.11-11, HammerDB does not detect it"
+  },
+  "6ABC2D11D6AB03E273536353": {
+    "github_username": "vadimtk",
+    "pr_url": "https://github.com/TPC-Council/hammerdb-results/pull/14",
+    "pr_description": "TPROC-C result for Percona Server for MySQL 9.7.2-2: 1000 warehouses, 192 VU, 2,136,079 NOPM, on AWS c8id.48xlarge (192 vCPU, 384 GiB, Ubuntu 24.04).\n\nHammerDB 6.0 CLI; workload and driver unchanged. The artifact reports Percona Server for MySQL with 9.7.2-2 from @@version_comment detection proposed in TPC-Council/HammerDB#944; job.database remains MySQL."
+  }
+}
