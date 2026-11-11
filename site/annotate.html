@@ -53,7 +53,11 @@
     .workload-choices input{accent-color:var(--accent)}
     .annotate-field select{background:var(--surface-soft);border:1px solid var(--border);border-radius:9px;padding:11px;color:var(--text);min-height:45px}
     .annotate-link{font-size:13px;font-weight:800}
-    #form-container[hidden]{display:none!important}
+    #form-container[hidden],.annotate-status[hidden]{display:none!important}
+    .annotate-optional>summary{cursor:pointer;font-size:16px;font-weight:800;line-height:1.5}
+    .annotate-extra-section{margin-top:18px;padding-top:15px;border-top:1px solid var(--border)}
+    .annotate-field [aria-invalid="true"]{border-color:#e86a78;outline:2px solid #e86a7833}
+    #action-status{margin-top:14px}
     @media(max-width:660px){.annotate-meta,.annotate-fields{grid-template-columns:1fr}.annotate-page{padding-inline:14px}.annotate-header,.annotate-card{padding:18px}}
   </style>
 </head>
@@ -93,13 +97,16 @@
     </section>
     <section class="annotate-card">
       <h2>Add a comment</h2>
-      <p class="annotate-help">Comments from any GitHub contributor can be proposed by PR and published after review.</p>
+      <p class="annotate-help">To add a comment, enter your GitHub username and the comment. Company and workload settings are optional.</p>
       <div class="annotate-field" style="margin-top:16px"><label for="comment-author">Your GitHub username</label><input id="comment-author" maxlength="39" autocomplete="username" placeholder="GitHub login of the person opening the PR"><span class="help">If you add a comment, this must match the GitHub account opening the pull request.</span></div>
       <div class="annotate-field"><label for="new-comment">Your comment</label>
         <textarea id="new-comment" maxlength="4000" placeholder="Benchmark setup, configuration, observations or follow-up details"></textarea>
       </div>
     </section>
-    <section class="annotate-card">
+    <details class="annotate-card annotate-optional">
+      <summary>Company and CPU/I/O settings (optional)</summary>
+      <p class="annotate-help" style="margin-top:10px">Leave this closed to add only a comment. Company and workload changes are restricted to the original submitter or a maintainer.</p>
+      <section class="annotate-extra-section">
       <h2>Company details <small class="annotate-permission">Original submitter or maintainer</small></h2>
       <div class="annotate-fields">
         <div class="annotate-field"><label for="company-name">Company / organisation</label><input id="company-name" maxlength="120" placeholder="Organisation name"></div>
@@ -108,7 +115,7 @@
       <div class="annotate-field"><label for="company-description">Company description</label>
         <textarea id="company-description" maxlength="350" placeholder="Short description of your organisation"></textarea></div>
     </section>
-    <section class="annotate-card" id="workload-section" hidden>
+    <section class="annotate-extra-section" id="workload-section" hidden>
       <h2>TPROC-C workload classification <small class="annotate-permission">Original submitter or maintainer</small></h2>
       <div class="annotate-current">Current: <strong id="current-workload">Not classified</strong></div>
       <fieldset class="workload-choices"><legend>Select classification</legend>
@@ -127,12 +134,14 @@
       </div>
       <p class="annotate-help">CPU-intensive requires UAW disabled; I/O-intensive requires UAW enabled and full durability. Both require at least 20 characters of configuration evidence. These are configuration labels, not a diagnosis from IOPS alone.</p>
     </section>
+    </details>
     <section class="annotate-card">
       <h2>Send for review</h2>
       <div class="annotate-submit">
-        <button type="button" id="send-github">Copy JSON and continue to GitHub</button>
+        <button type="button" id="send-github">Copy JSON and open GitHub</button>
         <button type="button" id="copy-json">Copy JSON only</button>
       </div>
+      <p id="action-status" class="annotate-status" role="status" aria-live="polite" hidden></p>
       <p class="annotate-help" style="margin-top:12px">GitHub opens the file editor. Paste the copied JSON, commit it to a branch or fork, and open a pull request against <strong data-repository-name>the hosting repository</strong>. If an annotation already exists, replace its contents in the editor. <strong>No changes are submitted automatically.</strong></p>
       <p id="github-target" style="margin-top:10px"><a class="annotate-link" id="github-editor-link" href="#" target="_blank" rel="noopener noreferrer">Open GitHub editor</a></p>
       <details class="annotate-preview"><summary>Review the JSON to paste</summary><pre id="annotation-preview"></pre></details>
@@ -161,6 +170,8 @@
   });
   media?.addEventListener?.("change",()=>{if(themeChoice()==="system")theme("system");});
   let row=null;
+  let initialCompany=null;
+  let initialWorkload=null;
   function status(message,kind){
     $("annotate-status").textContent=message;
     $("annotate-status").className="annotate-status"+(kind?" "+kind:"");
@@ -191,94 +202,136 @@
     const root=target.url+"/"+(result.annotation_exists?"edit":"new")+"/"+target.branch;
     return root+(result.annotation_exists?"/"+filename:"?filename="+encodeURIComponent(filename));
   }
-  function chosenWorkload(){
+  function workloadInputs(){
     const classification=document.querySelector('input[name="classification"]:checked')?.value||"unclassified";
     const uaw=$("uaw-setting").value;
-    const durability=$("durability-setting").value;
-    const details=$("workload-details").value.trim();
-    if(classification!=="unclassified"){
-      if(details.length<20)throw Error("CPU/I/O classification requires configuration details (at least 20 characters).");
-      if(uaw==="unknown" || durability==="unknown")throw Error("Select UAW and database durability to classify this result.");
-      if(classification==="io-intensive"&&(uaw!=="true"||durability!=="full"))
-        throw Error("I/O-intensive requires UAW enabled and full durability.");
-      if(classification==="cpu-intensive"&&uaw!=="false")
-        throw Error("CPU-intensive requires UAW disabled.");
+    return {classification,use_all_warehouses:uaw==="unknown"?null:uaw==="true",
+      durability:$("durability-setting").value,details:$("workload-details").value.trim()};
+  }
+  function inputError(message,fieldId){
+    const error=new Error(message);
+    error.fieldId=fieldId;
+    throw error;
+  }
+  function checkedWorkload(profile){
+    if(profile.classification!=="unclassified"){
+      if(profile.details.length<20)
+        inputError("CPU/I/O classification requires at least 20 characters of configuration details.","workload-details");
+      if(profile.use_all_warehouses===null||profile.durability==="unknown")
+        inputError("Select UAW and database durability for this classification.","uaw-setting");
+      if(profile.classification==="io-intensive"&&(profile.use_all_warehouses!==true||profile.durability!=="full"))
+        inputError("I/O-intensive requires UAW enabled and full durability.","uaw-setting");
+      if(profile.classification==="cpu-intensive"&&profile.use_all_warehouses!==false)
+        inputError("CPU-intensive requires UAW disabled.","uaw-setting");
     }
-    return {classification,use_all_warehouses:uaw==="unknown"?null:uaw==="true",durability,details};
+    return profile;
   }
   function makeAnnotation(){
-    if(!row)throw Error("Result details have not loaded.");
-    const name=$("company-name").value.trim();
-    const logo=$("company-logo").value.trim();
-    const description=$("company-description").value.trim();
-    const comment=$("new-comment").value.trim();
+    if(!row)inputError("Result details have not loaded.");
+    const name=$("company-name").value.trim(),logo=$("company-logo").value.trim();
+    const description=$("company-description").value.trim(),comment=$("new-comment").value.trim();
     const author=$("comment-author").value.trim().replace(/^@/,"");
     const gh=/^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?(?:\[bot\])?$/i;
-    if(comment && (!gh.test(author)||author.includes("--")))
-      throw Error("Enter your GitHub login to attribute the new comment.");
+    if(comment&&(!gh.test(author)||author.includes("--")))
+      inputError("Enter the GitHub username that will open the pull request.","comment-author");
     const comments=Array.isArray(row.submitter_comments)?row.submitter_comments.slice():[];
     if(comment)comments.push({github_username:author,text:comment});
-    if(comments.length>30)throw Error("Maximum 30 comments; consolidate notes before adding more.");
-    if(logo&&!safeHttps(logo))throw Error("Company logo must be a public HTTPS URL.");
-    if(logo&&!name)throw Error("Provide a company name when including its logo.");
-    const displayedCompany={
-      name:row.company_name||"",logo_url:row.company_logo_url||"",
-      description:row.company_description||""
-    };
-    const changedCompany=name!==displayedCompany.name||logo!==displayedCompany.logo_url||description!==displayedCompany.description;
+    if(comments.length>30)
+      inputError("This result already has 30 comments. Ask a maintainer to consolidate them.","new-comment");
+    const changedCompany=!initialCompany||
+      name!==initialCompany.name||logo!==initialCompany.logo_url||description!==initialCompany.description;
+    if(changedCompany&&logo&&!safeHttps(logo))
+      inputError("Company logo must be a public HTTPS URL.","company-logo");
+    if(changedCompany&&logo&&!name)
+      inputError("Provide a company name when including a logo.","company-name");
     const company=changedCompany?
-      {name,logo_url:logo?safeHttps(logo):"",description}:
-      (row.annotation_company||{});
-    const annotation={
-      jobid:row.jobid,github_username:row.submitted_by,
-      company,comments
-    };
+      {name,logo_url:logo?safeHttps(logo):"",description}:(row.annotation_company||{});
+    const annotation={jobid:row.jobid,github_username:row.submitted_by,company,comments};
+    let changedWorkload=false;
     if(row.benchmark==="TPROC-C"){
-      const profile=chosenWorkload();
-      const baseline={
-        classification:row.workload_class||"unclassified",
-        use_all_warehouses:row.workload_uaw??null,
-        durability:row.workload_durability||"unknown",
-        details:row.workload_details||""
-      };
-      const changed=Object.keys(profile).some(key=>profile[key]!==baseline[key]);
-      if(changed)annotation.workload=profile;
+      const current=workloadInputs();
+      changedWorkload=!!initialWorkload&&
+        Object.keys(current).some(key=>current[key]!==initialWorkload[key]);
+      if(changedWorkload)annotation.workload=checkedWorkload(current);
       else if(row.annotation_workload)annotation.workload=row.annotation_workload;
     }
-    if(!comments.length&&!name&&!description&&!annotation.workload)
-      throw Error("Add a comment, company details, or workload configuration.");
-    if(!comment&&!changedCompany &&
-       (!("workload" in annotation) || JSON.stringify(annotation.workload)===JSON.stringify(row.annotation_workload)))
-      throw Error("Nothing new to submit. Add a comment or change the company/workload settings.");
+    if(!comment&&!changedCompany&&!changedWorkload)
+      inputError("Enter a comment above, or change an optional company/workload setting.","new-comment");
+    if(!comments.length&&!company.name&&!company.description&&!annotation.workload)
+      inputError("Add a comment or provide company/workload information.","new-comment");
     return JSON.stringify(annotation,null,2)+"\n";
+  }
+  function actionStatus(message,kind,fieldId){
+    const node=$("action-status");
+    node.hidden=false;
+    node.textContent=message;
+    node.className="annotate-status"+(kind?" "+kind:"");
+    if(fieldId){
+      const field=$(fieldId);
+      if(field){
+        field.setAttribute("aria-invalid","true");
+        field.focus?.({preventScroll:true});
+      }
+    }
+    node.scrollIntoView?.({block:"nearest"});
   }
   function refreshPreview(){
     if(!row)return;
     try{$("annotation-preview").textContent=makeAnnotation();}
     catch(e){$("annotation-preview").textContent=e.message;}
   }
-  async function copyOnly(){
-    let json;
-    try{json=makeAnnotation();}catch(e){status(e.message,"error");return false;}
-    $("annotation-preview").textContent=json;
+  async function copyPrepared(json){
     try{
-      await navigator.clipboard.writeText(json);
-      status("JSON copied. Paste it into the GitHub editor and open your pull request.","success");
-      return true;
-    }catch(e){
+      if(navigator.clipboard?.writeText){
+        await navigator.clipboard.writeText(json);
+        return true;
+      }
+    }catch(e){}
+    const fallback=document.createElement("textarea");
+    fallback.value=json;
+    fallback.setAttribute("readonly","");
+    fallback.style.position="fixed";
+    fallback.style.top="-9999px";
+    document.body.appendChild(fallback);
+    fallback.focus();
+    fallback.select();
+    let copied=false;
+    try{copied=typeof document.execCommand==="function"&&document.execCommand("copy");}
+    finally{fallback.remove();}
+    return copied;
+  }
+  async function sendForReview(openGitHub){
+    let json;
+    try{json=makeAnnotation();}
+    catch(e){actionStatus(e.message,"error",e.fieldId);return;}
+    $("annotation-preview").textContent=json;
+    // Open synchronously in the click gesture, then navigate after clipboard succeeds.
+    const tab=openGitHub?window.open("about:blank","_blank"):null;
+    const copied=await copyPrepared(json);
+    if(!copied){
+      try{tab?.close();}catch(e){}
       document.querySelector(".annotate-preview").open=true;
-      status("Clipboard not available. Copy the JSON manually from the expanded preview.","error");
-      return false;
+      actionStatus("Automatic copy is unavailable. Expand the JSON below, copy it manually, then use the GitHub link.","error");
+      return;
+    }
+    if(openGitHub){
+      if(tab){
+        tab.opener=null;
+        tab.location.replace($("github-editor-link").href);
+        actionStatus("JSON copied. Paste it into the GitHub editor, commit your change and open a pull request.","success");
+      }else{
+        actionStatus("JSON copied. Your browser blocked the new tab; use the GitHub link below to continue.","success");
+      }
+    }else{
+      actionStatus("JSON copied. Paste it into the GitHub editor when you're ready.","success");
     }
   }
-  $("copy-json").addEventListener("click",copyOnly);
-  $("send-github").addEventListener("click",async()=>{
-    try{makeAnnotation();}catch(e){status(e.message,"error");return;}
-    const url=$("github-editor-link").href;
-    window.open(url,"_blank","noopener"); // direct gesture avoids popup blocking
-    await copyOnly();
-  });
-  ["company-name","company-logo","company-description","comment-author","new-comment","uaw-setting","durability-setting","workload-details"].forEach(id=>$(id).addEventListener("input",refreshPreview));
+  $("copy-json").addEventListener("click",()=>{void sendForReview(false);});
+  $("send-github").addEventListener("click",()=>{void sendForReview(true);});
+  ["company-name","company-logo","company-description","comment-author","new-comment","uaw-setting","durability-setting","workload-details"].forEach(id=>$(id).addEventListener("input",()=>{
+    $(id).removeAttribute("aria-invalid");
+    refreshPreview();
+  }));
   document.querySelectorAll('input[name="classification"]').forEach(r=>r.addEventListener("change",refreshPreview));
   fetch("leaderboard.json",{cache:"force-cache"})
     .then(r=>{if(!r.ok)throw Error("Leaderboard unavailable (HTTP "+r.status+")");return r.json();})
@@ -292,6 +345,7 @@
       $("company-name").value=row.company_name||"";
       $("company-logo").value=row.company_logo_url||"";
       $("company-description").value=row.company_description||"";
+      initialCompany={name:$("company-name").value.trim(),logo_url:$("company-logo").value.trim(),description:$("company-description").value.trim()};
       if(Array.isArray(row.submitter_comments)&&row.submitter_comments.length){
         $("prior-notes").hidden=false;
         row.submitter_comments.forEach(x=>addNote($("prior-comments"),x));
@@ -302,9 +356,10 @@
         $("current-workload").textContent=label[row.workload_class]||"Not classified";
         const choice=document.querySelector('input[name="classification"][value="'+(row.workload_class||"unclassified")+'"]');
         if(choice)choice.checked=true;
-        $("uaw-setting").value=row.workload_uaw===null?"unknown":String(row.workload_uaw);
+        $("uaw-setting").value=row.workload_uaw==null?"unknown":String(row.workload_uaw);
         $("durability-setting").value=row.workload_durability||"unknown";
         $("workload-details").value=row.workload_details||"";
+        initialWorkload=workloadInputs();
       }
       if(row.original_pr_description){
         $("pr-notes").hidden=false;
