@@ -26,6 +26,9 @@ jobs:
       - name: Validate artifacts
         run: python tools/validate_result.py
 
+      - name: Test comment form
+        run: node --test tests/test_annotation_form.cjs
+
       - name: Build leaderboard
         run: python tools/build_leaderboard.py
 
