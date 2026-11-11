@@ -70,6 +70,7 @@ async function mount({ row: changes = {}, clipboard = "working", popupBlocked = 
   const body = new Element("body");
   const clipboardWrites = [];
   const openedTabs = [];
+  const events = [];
   const document = {
     body,
     documentElement: { dataset: {} },
@@ -105,6 +106,7 @@ async function mount({ row: changes = {}, clipboard = "working", popupBlocked = 
     },
     matchMedia() { return { matches: false, addEventListener() {} }; },
     open(initial, target) {
+      events.push("open");
       if (popupBlocked) return null;
       const tab = {
         initial, target, closed: false, navigated: null, opener: window,
@@ -119,6 +121,7 @@ async function mount({ row: changes = {}, clipboard = "working", popupBlocked = 
   if (clipboard !== "unavailable") {
     navigator.clipboard = {
       async writeText(text) {
+        events.push("copy");
         if (clipboard === "denied") throw new Error("Clipboard denied");
         clipboardWrites.push(text);
       }
@@ -145,7 +148,7 @@ async function mount({ row: changes = {}, clipboard = "working", popupBlocked = 
     for (const fn of get(id).events.get("click") || []) fn();
     await new Promise(setImmediate);
   }
-  return { get, row, radios, click, clipboardWrites, openedTabs };
+  return { get, row, radios, click, clipboardWrites, openedTabs, events };
 }
 function payload(page) {
   assert.equal(page.clipboardWrites.length, 1);
@@ -216,6 +219,7 @@ test("open GitHub copies first, then navigates to a new annotation file", async 
   assert.equal(page.clipboardWrites.length, 1);
   assert.equal(page.openedTabs.length, 1);
   assert.equal(page.openedTabs[0].initial, "about:blank");
+  assert.deepEqual(page.events.slice(0, 2), ["copy", "open"]);
   assert.match(page.openedTabs[0].navigated, /\/new\/main\?filename=submissions%2Fannotations%2F/);
   assert.match(page.get("action-status").textContent, /Paste it into the GitHub editor/);
 });

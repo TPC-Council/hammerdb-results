@@ -305,9 +305,10 @@
     try{json=makeAnnotation();}
     catch(e){actionStatus(e.message,"error",e.fieldId);return;}
     $("annotation-preview").textContent=json;
-    // Open synchronously in the click gesture, then navigate after clipboard succeeds.
+    // Start clipboard access before opening a new tab; both happen in the click gesture.
+    const pendingCopy=copyPrepared(json);
     const tab=openGitHub?window.open("about:blank","_blank"):null;
-    const copied=await copyPrepared(json);
+    const copied=await pendingCopy;
     if(!copied){
       try{tab?.close();}catch(e){}
       document.querySelector(".annotate-preview").open=true;
