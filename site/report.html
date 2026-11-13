@@ -3,6 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        let pref="system";
+        try { pref=localStorage.getItem("hammerdb-results-theme") || "system"; } catch(e) {}
+        const dark=window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme =
+          pref==="light" || pref==="dark" ? pref : (dark ? "dark" : "light");
+      })();
+    </script>
     <title>HammerDB Result Artifact</title>
     <style>
       :root {
@@ -181,12 +191,19 @@
         }
       }
     </style>
+    <script src="repository-context.js"></script>
+  <script src="repository.js"></script>
+    <link rel="stylesheet" href="report-theme.css" />
   </head>
   <body>
     <nav class="top">
       <div class="top-inner">
-        <a class="back" href="index.html">← Back to leaderboard</a
-        ><span class="label">HammerDB Result Artifact</span>
+        <a class="back" href="index.html">← Leaderboard</a>
+        <div class="report-brand-group">
+          <a href="https://www.hammerdb.com/" class="report-white-logo" target="_blank" rel="noopener noreferrer"><img src="assets/images/hammerDB-H-logo-FINAL.png" alt="HammerDB"></a>
+          <strong class="report-title">HammerDB Benchmark Report</strong>
+          <a href="https://www.tpc.org/" class="report-white-logo" target="_blank" rel="noopener noreferrer"><img src="assets/images/tpclogo.png" alt="TPC"></a>
+        </div><label class="theme-control" for="theme-select"><span>Theme</span><select id="theme-select" class="theme-select" aria-label="Colour theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
       </div>
     </nav>
     <main class="wrap">
@@ -201,6 +218,22 @@
             <div class="k">Primary metric</div>
             <div id="primary" class="big">—</div>
             <div id="secondary" class="sub">—</div>
+          </div>
+        </section>
+        <section class="card submission-evidence" id="submission-evidence">
+          <div class="report-submission-heading"><h2>Submitter comments</h2><span id="report-workload-badge" class="report-profile-badge unclassified">Not classified</span></div>
+          <div class="report-identity-grid">
+            <div><div class="k">Submitted by</div><div id="report-submitter" class="report-attribution">GitHub attribution not recorded</div></div>
+            <div id="report-company-container" hidden><div class="k">Company / organisation</div><div id="report-company" class="report-company"></div><div id="report-company-description" class="report-company-description"></div></div>
+          </div>
+          <div id="report-description-container" hidden><div class="k">Benchmark description</div><p id="report-description"></p></div>
+          <div id="report-original-pr-container" hidden><div class="k">Original PR description</div><p id="report-original-pr-notes"></p><a id="report-original-pr-link" class="report-origin-link" href="#" target="_blank" rel="noopener noreferrer">Read original PR</a></div>
+          <div id="report-comments-container" hidden><div class="k">Comments</div><div id="report-comments"></div></div>
+          <p id="report-comments-empty" hidden class="muted">No comments have been added yet.</p>
+          <div id="report-config-container" hidden><div class="k">CPU / I/O configuration details</div><p id="report-config-evidence"></p></div>
+          <div id="report-annotation-actions" class="report-annotation-actions" hidden>
+            <a id="report-annotate-link" class="report-edit-link" href="annotate.html">Add a comment / choose CPU or I/O</a>
+            <span>Anyone can propose comments. Company and workload changes require the original submitter or a maintainer.</span>
           </div>
         </section>
         <section class="card">
@@ -237,6 +270,7 @@
             <section>
               <h3 id="rt-chart-title">Response-time percentiles</h3>
               <div class="chart-box"><canvas id="rtchart"></canvas></div>
+              <p id="rt-boxplot-key" class="chart-key" hidden>Box: p25–p75 · median: p50 · whiskers: minimum and p95 · dot: p99. Hover to see all values, including the maximum.</p>
             </section>
           </section>
           <section class="grid2">
@@ -274,7 +308,6 @@
         </section>
       </div>
     </main>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       (() => {
         const qp = new URLSearchParams(location.search),
@@ -325,14 +358,358 @@
               ? s
               : d.toISOString().slice(11, 19);
           };
+
+        const colourMedia = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+        function themeChoice() {
+          try { return localStorage.getItem("hammerdb-results-theme") || "system"; }
+          catch (e) { return "system"; }
+        }
+        function reportTheme(value) {
+          const selected = ["system","light","dark"].includes(value) ? value : "system";
+          document.documentElement.dataset.theme = selected==="system" ? (colourMedia?.matches ? "dark" : "light") : selected;
+          $("theme-select").value = selected;
+          // Only redraw charts that have entered the viewport.
+          for (const id of Object.keys(charts)) {
+            if ($(id)?.parentElement?.querySelector("svg.native-report-chart")) drawNativeChart(id, charts[id]);
+          }
+        }
+        reportTheme(themeChoice());
+        $("theme-select").addEventListener("change",(event)=>{
+          const choice=event.target.value;
+          try { if (choice==="system") localStorage.removeItem("hammerdb-results-theme");
+                else localStorage.setItem("hammerdb-results-theme",choice); } catch(e) {}
+          reportTheme(choice);
+        });
+        colourMedia?.addEventListener?.("change",()=>{
+          if (themeChoice()==="system") reportTheme("system");
+        });
+        function safeLogoUrl(raw) {
+          try {
+            const url = new URL(String(raw));
+            return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+          } catch { return null; }
+        }
+        function renderSubmission(source, bench) {
+          const original = source.submission || {};
+          const ghRe = /^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i;
+          function fill(data) {
+            const username = original.github_username || data.submitted_by;
+            $("report-submitter").replaceChildren();
+            if (ghRe.test(String(username || ""))) {
+              const link = document.createElement("a");
+              link.href = "https://github.com/" + encodeURIComponent(username);
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              link.textContent = "@" + username;
+              $("report-submitter").append(link);
+            } else {
+              $("report-submitter").textContent = "GitHub attribution not recorded";
+            }
+            const company = original.company || {};
+            const name = data.company_name || company.name;
+            const desc = data.company_description || company.description;
+            const image = safeLogoUrl(data.company_logo_url || company.logo_url);
+            if (name || desc || image) {
+              $("report-company-container").hidden = false;
+              $("report-company").replaceChildren();
+              if (image) {
+                const logo = document.createElement("img");
+                logo.src = image; logo.alt = String(name || "Company") + " logo";
+                logo.referrerPolicy = "no-referrer";
+                logo.loading = "lazy";
+                $("report-company").append(logo);
+              }
+              const nameSpan = document.createElement("strong");
+              nameSpan.textContent = name || "Organisation";
+              $("report-company").append(nameSpan);
+              $("report-company-description").textContent = desc || "";
+            }
+            const description = original.description || data.result_description;
+            if (description) {
+              $("report-description-container").hidden = false;
+              $("report-description").textContent = description;
+            }
+            const originalNotes = data.original_pr_description;
+            if (originalNotes) {
+              $("report-original-pr-container").hidden = false;
+              $("report-original-pr-notes").textContent = originalNotes;
+              const prLink = data.submission_pr_url;
+              if (/^https:\/\/github\.com\/[a-z0-9-]+\/hammerdb-results\/pull\/\d+$/i.test(prLink || "")) {
+                $("report-original-pr-link").href = prLink;
+                $("report-original-pr-link").hidden = false;
+              } else {
+                $("report-original-pr-link").hidden = true;
+              }
+            }
+            if (Array.isArray(data.submitter_comments) && data.submitter_comments.length) {
+              $("report-comments-container").hidden = false;
+              const wrapper = $("report-comments");
+              wrapper.replaceChildren();
+              data.submitter_comments.forEach((comment)=>{
+                const p=document.createElement("p");
+                p.className="report-submitter-comment";
+                if (comment && typeof comment === "object") {
+                  const who = String(comment.github_username || "");
+                  if (/^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?(?:\[bot\])?$/i.test(who)) {
+                    const link=document.createElement("a");
+                    link.href="https://github.com/"+encodeURIComponent(who);
+                    link.target="_blank";
+                    link.rel="noopener noreferrer";
+                    link.textContent="@"+who+": ";
+                    p.appendChild(link);
+                  }
+                  p.appendChild(document.createTextNode(String(comment.text || "")));
+                } else {
+                  p.textContent=String(comment);
+                }
+                wrapper.appendChild(p);
+              });
+            }
+            const hasComments = Boolean(description || originalNotes ||
+              (Array.isArray(data.submitter_comments) && data.submitter_comments.length));
+            $("report-comments-empty").hidden = hasComments;
+            if (source.job?.jobid) {
+              $("report-annotate-link").textContent = bench === "TPROC-C"
+                ? "Add a comment / choose CPU or I/O" : "Add a comment";
+              const target = new URL("annotate.html", location.href);
+              target.searchParams.set("jobid", source.job.jobid);
+              $("report-annotate-link").href = target.href;
+              $("report-annotation-actions").hidden = false;
+            }
+            const w = original.workload || {};
+            const category = data.workload_class || w.classification || "unclassified";
+            const uaw = w.use_all_warehouses !== undefined ? w.use_all_warehouses : data.workload_uaw;
+            const durability = w.durability || data.workload_durability || "unknown";
+            const details = w.details || data.workload_details || "";
+            const validIo = category === "io-intensive" && uaw === true && durability === "full" && details;
+            const validCpu = category === "cpu-intensive" && uaw === false && ["full", "relaxed"].includes(durability) && details;
+            const badge = $("report-workload-badge");
+            if (bench === "TPROC-C" && (validIo || validCpu)) {
+              badge.className = "report-profile-badge " + (validIo ? "io" : "cpu");
+              badge.textContent = validIo ? "I/O-INTENSIVE" : "CPU-INTENSIVE";
+              $("report-config-container").hidden = false;
+              $("report-config-evidence").textContent = "UAW: " + (uaw ? "Enabled" : "Disabled") +
+                " · Durability: " + (durability === "full" ? "Full/synchronous" : "Relaxed") +
+                "\n" + details;
+            } else {
+              badge.className = "report-profile-badge unclassified";
+              badge.textContent = bench === "TPROC-C" ? "NOT CLASSIFIED" : "TPROC-H";
+              if (bench === "TPROC-C" && (uaw !== undefined && uaw !== null || durability !== "unknown" || details)) {
+                $("report-config-container").hidden = false;
+                $("report-config-evidence").textContent = "UAW: " + (uaw == null ? "Not recorded" : uaw ? "Enabled" : "Disabled") + " · Durability: " + durability + "\n" + details;
+              }
+            }
+          }
+          fill({});
+          // The leaderboard stores this small attribution index when linking to a report.
+          // Avoid waiting on another network request when it is already in session.
+          try {
+            const cached=JSON.parse(sessionStorage.getItem("hammerdb-leaderboard-v1") || "null");
+            if(cached && Date.now()-cached.at<30*60*1000 && Array.isArray(cached.rows)){
+              const matched=cached.rows.find((r)=>r.jobid===source.job?.jobid);
+              if(matched){fill(matched);return;}
+            }
+          } catch(e) {}
+          fetch("leaderboard.json",{cache:"force-cache"}).then((response) => response.ok ? response.json() : null)
+            .then((data) => {
+              const row = data && Array.isArray(data.rows)
+                ? data.rows.find((r) => r.jobid === source.job?.jobid) : null;
+              if (row) fill(row);
+            }).catch(() => {});
+        }
+
         function disclaimer(b) {
           const standard =
             String(b || "").toUpperCase() === "TPROC-H" ? "TPC-H" : "TPC-C";
           return `This workload is derived from the ${standard} Benchmark and is not comparable to published ${standard} Benchmark results, as this implementation does not comply with all requirements of the ${standard} Benchmark.`;
         }
+        // Lightweight SVG renderer: no CDN dependency, fast first content paint.
+        // Charts share the dark report's muted axes, filled line series and bright markers.
+        function drawNativeChart(id, cfg) {
+          const canvas = $(id);
+          if (!canvas || !cfg || !cfg.data) return;
+          const container = canvas.parentElement;
+          if (!container) return;
+          canvas.style.display = "none";
+          let svg = container.querySelector("svg.native-report-chart");
+          const NS = "http://www.w3.org/2000/svg";
+          function node(tag, attrs, label) {
+            const element = document.createElementNS(NS, tag);
+            Object.entries(attrs || {}).forEach(([key, value]) => element.setAttribute(key, String(value)));
+            if (label !== undefined) element.textContent = String(label);
+            return element;
+          }
+          if (!svg) {
+            svg = node("svg", {class:"native-report-chart",viewBox:"0 0 650 352",role:"img","aria-label":(container.closest("section")?.querySelector("h3")?.textContent || id)+" chart",preserveAspectRatio:"xMidYMid meet"});
+            container.appendChild(svg);
+          }
+          svg.replaceChildren();
+          const isDark = document.documentElement.dataset.theme !== "light";
+          const ink = isDark ? "#d9e6f5" : "#233d61";
+          const secondary = isDark ? "#96afcb" : "#58718c";
+          const grid = isDark ? "#30405a" : "#e0e7f0";
+          const datasets = Array.isArray(cfg.data.datasets) ? cfg.data.datasets : [];
+          const labels = Array.isArray(cfg.data.labels) ? cfg.data.labels.map(String) : [];
+          const count = Math.max(1, labels.length);
+          const ml=90, mr=23, mt=38, mb=80, w=650, h=352, pw=w-ml-mr, ph=h-mt-mb;
+          const values = datasets.flatMap((d)=>Array.isArray(d.data) ? d.data.flatMap((point)=>{
+            if(cfg.type==="boxplot" && point && typeof point==="object")
+              // Plot up to p99; extreme maxima are retained in hover details, not the axis.
+              return ["min","p25","p50","p75","p95","p99"].map((key)=>point[key]).filter((v)=>typeof v==="number" && Number.isFinite(v));
+            const value=Number(point);
+            return Number.isFinite(value) ? [value] : [];
+          }) : []);
+          if (!values.length || labels.length===0) {
+            svg.append(node("text",{x:w/2,y:h/2,fill:secondary,"text-anchor":"middle","font-size":15},"No chart data recorded"));
+            return;
+          }
+          const actualMax = Math.max(0,...values);
+          const yAxis = cfg.options && cfg.options.scales && cfg.options.scales.y;
+          const fixedMax = yAxis && typeof yAxis.max === "number" ? yAxis.max : null;
+          function scaleMaximum(value) {
+            if (!Number.isFinite(value) || value <= 0) return 1;
+            const wanted=value*1.08;
+            const magnitude=10**Math.floor(Math.log10(wanted));
+            const intervals=[1,1.25,1.5,2,2.5,3,4,5,6,7.5,8,10];
+            return (intervals.find((n)=>n*magnitude>=wanted) || 10)*magnitude;
+          }
+          const maxY = fixedMax || scaleMaximum(actualMax);
+          const xPos = (i)=>ml+((cfg.type==="bar" || cfg.type==="boxplot")?(i+0.5)*pw/count:(count===1?pw/2:i*pw/(count-1)));
+          const yPos = (value)=>mt+ph*(1-Math.max(0,Math.min(maxY,value))/maxY);
+          const labelY = yAxis?.ticks?.callback;
+          function formatY(v) {
+            if(id==="cpu") return Math.round(v)+"%";
+            const abbrev=(value,suffix)=>Number(value.toFixed(value>=10?0:1)).toLocaleString()+suffix;
+            if(Math.abs(v)>=1000000)return abbrev(v/1000000,"M");
+            if(Math.abs(v)>=1000)return abbrev(v/1000,"k");
+            if (typeof labelY === "function") return String(labelY(v));
+            return Number(v.toFixed(2)).toString();
+          }
+          for(let k=0;k<=4;k++) {
+            const value = maxY*k/4, y=yPos(value);
+            svg.append(node("line",{x1:ml,y1:y,x2:w-mr,y2:y,stroke:grid,"stroke-width":1,"stroke-dasharray":k===0?"0":"4 5"}));
+            svg.append(node("text",{x:ml-12,y:y+4,fill:secondary,"text-anchor":"end","font-size":13},formatY(value)));
+          }
+          svg.append(node("line",{x1:ml,y1:mt,x2:ml,y2:mt+ph,stroke:grid,"stroke-width":1}));
+          const skip = Math.max(1,Math.ceil(count/6));
+          labels.forEach((name,i)=>{
+            if(i!==count-1 && i%skip!==0) return;
+            svg.append(node("text",{x:xPos(i),y:mt+ph+21,fill:secondary,"text-anchor":"middle","font-size":11},name.length>17?name.slice(0,16)+"…":name));
+          });
+          if(cfg.type==="boxplot") {
+            // Percentile-based box plot from the submitted artifact:
+            // box p25-p75, median p50, whiskers at observed min and p95,
+            // with p99 as a separate tail marker. This is NOT a Tukey 1.5-IQR plot.
+            const series = datasets[0]?.data || [];
+            const fill = isDark ? "#254d7a" : "#d5eaff";
+            const outline = isDark ? "#68c6ff" : "#1561aa";
+            const medianColor = isDark ? "#f7c969" : "#c07510";
+            const highColor = isDark ? "#d5a2ff" : "#8541c7";
+            const boxWidth = Math.min(53, pw/count*0.42);
+            function ms(value) {
+              return typeof value==="number" && Number.isFinite(value)
+                ? (Math.round(value*1000)/1000).toLocaleString()+" ms" : "Not recorded";
+            }
+            series.forEach((point,i)=>{
+              if (!point || ![point.p25,point.p50,point.p75,point.p95].every((v)=>typeof v==="number" && Number.isFinite(v))) return;
+              const x = xPos(i), q1 = yPos(point.p25), q3 = yPos(point.p75);
+              const median = yPos(point.p50), p95 = yPos(point.p95);
+              const lower = (typeof point.min==="number" && Number.isFinite(point.min)) ? yPos(point.min) : q1;
+              const item = node("g",{class:"percentile-box"});
+              item.append(node("title",{},
+                (labels[i] || "Transaction") + "\nMinimum: "+ms(point.min)+
+                "\np25: "+ms(point.p25)+"\np50 (median): "+ms(point.p50)+
+                "\np75: "+ms(point.p75)+"\np95: "+ms(point.p95)+
+                "\np99: "+ms(point.p99)+"\nMaximum: "+ms(point.max)));
+              // Observed minimum to first quartile; third quartile to p95.
+              item.append(node("line",{x1:x,y1:lower,x2:x,y2:q1,stroke:outline,"stroke-width":2.2}));
+              item.append(node("line",{x1:x-boxWidth*.25,y1:lower,x2:x+boxWidth*.25,y2:lower,stroke:outline,"stroke-width":2.2}));
+              item.append(node("line",{x1:x,y1:q3,x2:x,y2:p95,stroke:outline,"stroke-width":2.2}));
+              item.append(node("line",{x1:x-boxWidth*.25,y1:p95,x2:x+boxWidth*.25,y2:p95,stroke:outline,"stroke-width":2.2}));
+              item.append(node("rect",{x:x-boxWidth/2,y:Math.min(q1,q3),width:boxWidth,height:Math.max(2,Math.abs(q1-q3)),rx:3,fill:fill,stroke:outline,"stroke-width":2}));
+              item.append(node("line",{x1:x-boxWidth/2,y1:median,x2:x+boxWidth/2,y2:median,stroke:medianColor,"stroke-width":3.5}));
+              if (typeof point.p99==="number" && Number.isFinite(point.p99)) {
+                item.append(node("circle",{cx:x,cy:yPos(point.p99),r:4.4,fill:highColor,stroke:isDark?"#121e33":"#fff","stroke-width":1.5}));
+              }
+              svg.append(item);
+            });
+          } else if(cfg.type==="bar") {
+            const defs=node("defs"); svg.append(defs);
+            const groupWidth = pw/count*0.86;
+            const barWidth = Math.min(133,Math.max(20,groupWidth/Math.max(1,datasets.length)-7));
+            datasets.forEach((d,di)=>{
+              (d.data || []).forEach((raw,i)=>{
+                const value = Number(raw);
+                if(!Number.isFinite(value)) return;
+                const left = xPos(i) - (barWidth*datasets.length+(datasets.length-1)*4)/2 + di*(barWidth+4);
+                const y=yPos(value),base=yPos(0);
+                const gradients=[
+                  ["#73b9ff","#2052d3"],["#bc9dff","#6445d0"],
+                  ["#5de0c0","#117d85"],["#ffbe81","#d46a39"]
+                ];
+                const shades=gradients[(di+i)%gradients.length], gradientId="report-bar-"+id+"-"+di+"-"+i;
+                const gradient=node("linearGradient",{id:gradientId,x1:"0%",y1:"0%",x2:"0%",y2:"100%"});
+                gradient.append(node("stop",{offset:"0%","stop-color":shades[0]}),
+                                node("stop",{offset:"100%","stop-color":shades[1]}));
+                defs.append(gradient);
+                const bar = node("rect",{x:left,y:y,width:barWidth,height:Math.max(1,base-y),rx:5,fill:"url(#"+gradientId+")"});
+                bar.append(node("title",{},(d.label||labels[i]||"Result")+": "+formatY(value)));
+                svg.append(bar);
+              });
+            });
+          } else {
+            const definitions=node("defs");
+            svg.append(definitions);
+            datasets.forEach((d,di)=>{
+              const color = d.borderColor || ["#42a3ff","#26ce88","#ee5470"][di%3];
+              const points=(d.data||[]).map((raw,i)=>({x:xPos(i),y:yPos(Number(raw)),raw:Number(raw)})).filter(p=>Number.isFinite(p.raw));
+              if(!points.length)return;
+              const path=points.map((p,i)=>(i?"L":"M")+p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
+              if(d.fill){
+                const gradientId="native-report-fill-"+id+"-"+di;
+                const gradient=node("linearGradient",{id:gradientId,x1:"0%",y1:"0%",x2:"0%",y2:"100%"});
+                gradient.append(node("stop",{offset:"0%","stop-color":color,"stop-opacity":id==="cpu"?".42":".35"}),node("stop",{offset:"100%","stop-color":color,"stop-opacity":".025"}));
+                definitions.append(gradient);
+                const area=path+" L"+points[points.length-1].x+","+yPos(0)+" L"+points[0].x+","+yPos(0)+" Z";
+                svg.append(node("path",{d:area,fill:"url(#"+gradientId+")"}));
+              }
+              svg.append(node("path",{d:path,fill:"none",stroke:color,"stroke-width":2.8,"stroke-linejoin":"round","stroke-linecap":"round"}));
+              const dotSkip=Math.max(1,Math.ceil(points.length/45));
+              points.forEach((p,i)=>{
+                if(i%dotSkip && i!==points.length-1)return;
+                const dot=node("circle",{cx:p.x,cy:p.y,r:2.8,fill:color,stroke:isDark?"#0e192a":"#fff","stroke-width":1});
+                dot.append(node("title",{},(d.label||"Series")+" · "+(labels[i]||"")+": "+formatY(p.raw)));
+                svg.append(dot);
+              });
+            });
+          }
+          const units = (cfg.options?.scales?.y?.title?.text || "");
+          if(units)svg.append(node("text",{x:ml,y:20,fill:secondary,"font-size":13,"font-weight":600},units));
+          const showLegend = datasets.length>1 || (cfg.type==="line" && datasets.length===1);
+          if(showLegend) {
+            const legendWidth=datasets.length*136,start=Math.max(ml,Math.round(w/2-legendWidth/2));
+            datasets.forEach((d,di)=>{
+              const color=d.borderColor||d.backgroundColor||"#438cf9";
+              svg.append(node("line",{x1:start+di*136,y1:h-20,x2:start+di*136+24,y2:h-20,stroke:color,"stroke-width":3,"stroke-linecap":"round"}));
+              svg.append(node("text",{x:start+di*136+31,y:h-16,fill:ink,"font-size":12},d.label||"Metric"));
+            });
+          }
+        }
+        const visibleChartObserver = typeof IntersectionObserver==="function"
+          ? new IntersectionObserver((entries,observer)=>{
+              for(const entry of entries){
+                if(!entry.isIntersecting)continue;
+                const id=entry.target.querySelector("canvas")?.id;
+                if(id && charts[id])drawNativeChart(id,charts[id]);
+                observer.unobserve(entry.target);
+              }
+            },{rootMargin:"300px 0px"}):null;
         function chart(id, cfg) {
-          if (charts[id]) charts[id].destroy();
-          charts[id] = new Chart($(id).getContext("2d"), cfg);
+          charts[id] = cfg;
+          const element = $(id)?.parentElement;
+          if(!element) return;
+          if(visibleChartObserver) visibleChartObserver.observe(element);
+          else requestAnimationFrame(()=>drawNativeChart(id,cfg));
         }
         function opts(y, x, cb) {
           return {
@@ -390,7 +767,25 @@
           fail("Invalid artifact path", "Could not resolve artifact URL.");
           return;
         }
-        fetch(artifactUrl)
+        // Test-branch previews do not have Pages' generated site/results folder.
+        // Read the same artifact from the repository root without duplicating files.
+        if ((location.hostname === "raw.githack.com" || location.hostname === "rawcdn.githack.com")
+            && /^results\/[a-z0-9/_-]+\.json$/i.test(artifact)) {
+          artifactUrl = new URL("../" + artifact, location.href);
+        }
+        // Reports linked from the leaderboard are preloaded while browsing.
+        // Use the cached original JSON to avoid a second network round-trip.
+        const reportCacheKey="hammerdb-report-v1:"+artifact;
+        let cachedArtifact=null;
+        try {
+          const item=JSON.parse(sessionStorage.getItem(reportCacheKey)||"null");
+          if(item && Date.now()-item.at<30*60*1000 && item.body?.job?.jobid)
+            cachedArtifact=item.body;
+        } catch(e){}
+        const request=cachedArtifact
+          ? Promise.resolve({ok:true,json:()=>Promise.resolve(cachedArtifact)})
+          : fetch(artifactUrl,{cache:"force-cache"});
+        request
           .then((r) => {
             if (!r.ok) {
               fail(
@@ -405,7 +800,15 @@
           .then((a) => {
             status.style.display = "none";
             content.style.display = "block";
-            $("raw").textContent = JSON.stringify(a, null, 2);
+            // Keep the large pretty-printed JSON out of the initial render path.
+            const rawDetails=$("raw").closest("details");
+            if(rawDetails)rawDetails.addEventListener("toggle",()=>{
+              if(rawDetails.open && !$("raw").textContent)
+                $("raw").textContent=JSON.stringify(a,null,2);
+            });
+            if(!cachedArtifact)try{
+              sessionStorage.setItem(reportCacheKey,JSON.stringify({at:Date.now(),body:a}));
+            }catch(e){}
             const j = a.job || {},
               res = a.result || {},
               cfg = a.benchmark_config || {},
@@ -415,6 +818,7 @@
             $("title").textContent =
               `${j.database_display || j.database || "Unknown"} · ${j.benchmark || "Unknown benchmark"}`;
             $("disclaimer").textContent = disclaimer(benchmark);
+            renderSubmission(a, benchmark);
             [
               ["Release", j.release],
               ["HammerDB Version", j.hdb_version],
@@ -608,54 +1012,25 @@
                   },
                 },
               });
+              $("rt-chart-title").textContent = "Response-time percentiles · box plot";
+              $("rt-boxplot-key").hidden = false;
               chart("rtchart", {
-                type: "bar",
+                type: "boxplot",
                 data: {
-                  labels: ordered.map((r) =>
-                    String(r.name || "").toUpperCase(),
-                  ),
-                  datasets: [
-                    {
-                      label: "p50",
-                      data: ordered.map((r) => Number(r.p50_ms || 0)),
-                      backgroundColor: "#3b82f6",
-                    },
-                    {
-                      label: "p95",
-                      data: ordered.map((r) => Number(r.p95_ms || 0)),
-                      backgroundColor: "#f59e0b",
-                    },
-                    {
-                      label: "p99",
-                      data: ordered.map((r) => Number(r.p99_ms || 0)),
-                      backgroundColor: "#7c3aed",
-                    },
-                  ],
+                  labels: ordered.map((r)=>String(r.name || "").toUpperCase()),
+                  datasets: [{
+                    label: "Response-time distribution",
+                    data: ordered.map((r)=>{
+                      const ms = (v)=>typeof v==="number" && Number.isFinite(v) ? v : null;
+                      return {
+                        min:ms(r.min_ms),p25:ms(r.p25_ms),p50:ms(r.p50_ms),
+                        p75:ms(r.p75_ms),p95:ms(r.p95_ms),p99:ms(r.p99_ms),
+                        max:ms(r.max_ms)
+                      };
+                    })
+                  }]
                 },
-                options: {
-                  ...opts("Latency (ms)", "Operation", (v) => fmtMs(v)),
-                  plugins: {
-                    legend: { position: "bottom" },
-                    tooltip: {
-                      callbacks: {
-                        title: (items) =>
-                          `Operation: ${ordered[items[0].dataIndex]?.name || ""}`,
-                        afterBody: (items) => {
-                          const r = ordered[items[0].dataIndex];
-                          return r
-                            ? [
-                                `p25: ${fmtMs(r.p25_ms)} ms`,
-                                `p50: ${fmtMs(r.p50_ms)} ms`,
-                                `p75: ${fmtMs(r.p75_ms)} ms`,
-                                `p95: ${fmtMs(r.p95_ms)} ms`,
-                                `p99: ${fmtMs(r.p99_ms)} ms`,
-                              ]
-                            : [];
-                        },
-                      },
-                    },
-                  },
-                },
+                options: opts("Latency (ms)", "Operation", (v) => fmtMs(v))
               });
             }
             if (!tx.length) $("tx-section").style.display = "none";
@@ -698,8 +1073,8 @@
                     label: "usr %",
                     data: cpu.map((p) => p.usr),
                     borderColor: "#16a34a",
-                    backgroundColor: "rgba(22,163,74,.08)",
-                    fill: false,
+                    backgroundColor: "rgba(22,163,74,.24)",
+                    fill: true,
                     ...lineBase,
                   },
                   {

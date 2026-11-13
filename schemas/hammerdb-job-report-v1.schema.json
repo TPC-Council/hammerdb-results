@@ -17,7 +17,9 @@
     },
     "disclaimer": {
       "type": "object",
-      "required": ["audited"],
+      "required": [
+        "audited"
+      ],
       "properties": {
         "audited": {
           "type": "boolean"
@@ -35,12 +37,33 @@
         "timestamp"
       ],
       "properties": {
-        "jobid": {"type": "string", "minLength": 1},
-        "hdb_version": {"type": "string", "minLength": 1},
-        "database": {"type": "string", "minLength": 1},
-        "database_display": {"type": "string", "minLength": 1},
-        "benchmark": {"type": "string", "enum": ["TPROC-C", "TPROC-H"]},
-        "timestamp": {"type": "string", "minLength": 1}
+        "jobid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hdb_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "database": {
+          "type": "string",
+          "minLength": 1
+        },
+        "database_display": {
+          "type": "string",
+          "minLength": 1
+        },
+        "benchmark": {
+          "type": "string",
+          "enum": [
+            "TPROC-C",
+            "TPROC-H"
+          ]
+        },
+        "timestamp": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "benchmark_config": {
@@ -48,9 +71,79 @@
     },
     "result": {
       "type": "object",
-      "required": ["type"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": {"type": "string", "minLength": 1}
+        "type": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "submission": {
+      "type": "object",
+      "description": "Optional provenance and declared workload context added at submission; benchmark measurements are unchanged.",
+      "required": [
+        "github_username"
+      ],
+      "properties": {
+        "github_username": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "company": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "logo_url": {
+              "type": "string",
+              "maxLength": 500
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 350
+            }
+          }
+        },
+        "workload": {
+          "type": "object",
+          "properties": {
+            "classification": {
+              "type": "string",
+              "enum": [
+                "cpu-intensive",
+                "io-intensive",
+                "unclassified"
+              ]
+            },
+            "use_all_warehouses": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "durability": {
+              "type": "string",
+              "enum": [
+                "full",
+                "relaxed",
+                "unknown"
+              ]
+            },
+            "details": {
+              "type": "string",
+              "maxLength": 1200
+            }
+          }
+        }
       }
     }
   },

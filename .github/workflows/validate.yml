@@ -7,9 +7,13 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -18,6 +22,28 @@ jobs:
 
       - name: Validate artifacts
         run: python tools/validate_result.py
+
+      - name: Verify new result GitHub submitters
+        if: github.event_name == 'pull_request'
+        env:
+          EXPECTED_PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python tools/check_pr_submitter.py
+
+      - name: Verify original submitter owns annotation changes
+        if: github.event_name == 'pull_request'
+        env:
+          EXPECTED_PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python tools/check_annotation_author.py
+
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Test comment form
+        run: node --test tests/test_annotation_form.cjs
 
       - name: Build leaderboard
         run: python tools/build_leaderboard.py
