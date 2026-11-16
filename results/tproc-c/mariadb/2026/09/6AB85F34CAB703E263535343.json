@@ -1,0 +1,1149 @@
+{
+  "schema": "hammerdb-job-report-v1",
+  "description": "HammerDB benchmark result artifact. Machine-readable data, report_hints and analysis_hints are included for reproducible reporting, summary tables and chart generation.",
+  "artifact": {
+    "type": "hammerdb-result-json",
+    "schema": "hammerdb-job-report-v1",
+    "source": "HammerDB",
+    "generated_by": "HammerDB jobs summaryjson",
+    "visibility": "public",
+    "redacted": true
+  },
+  "disclaimer": {
+    "result_type": "HammerDB result artifact",
+    "audited": false,
+    "text": "This is a HammerDB result artifact. HammerDB TPROC-C and TPROC-H workloads are derived from the TPC-C and TPC-H specifications respectively. This result is not audited by the TPC-Council and is not a TPC result.",
+    "tpc_trademarks": "TPC-C, tpmC, TPC-H and QphH are trademarks of the Transaction Processing Performance Council. Unauthorised and unaudited use of official TPC result trademarks is not permitted.",
+    "hammerdb_copyright": "HammerDB is open source software distributed under the GNU General Public License (GPL). HammerDB source code, TPROC-C and TPROC-H workload implementations, documentation and related materials are copyright HammerDB Ltd. NOPM, TPROC-C and TPROC-H are HammerDB benchmark terminology.",
+    "learn_more_tpc": "https://www.tpc.org/",
+    "learn_more_hammerdb": "https://www.hammerdb.com/"
+  },
+  "report_hints": {
+    "title": "MariaDB TPROC-C Benchmark Report",
+    "intended_use": "Use this JSON to generate benchmark reports, summary tables, charts and public result artifact pages.",
+    "primary_result_metrics": [
+      "NOPM",
+      "TPM"
+    ],
+    "recommended_charts": [
+      {
+        "title": "MariaDB TPROC-C Result",
+        "chart_type": "bar",
+        "data_path": "result.chart_data",
+        "x": "metric",
+        "y": "value"
+      },
+      {
+        "title": "MariaDB TPROC-C Transaction Count",
+        "chart_type": "line",
+        "data_path": "transaction_count.series[].points",
+        "x": "timestamp",
+        "y": "value"
+      },
+      {
+        "title": "MariaDB TPROC-C Response Times",
+        "chart_type": "boxplot",
+        "data_path": "response_times.rows",
+        "category": "name",
+        "values": [
+          "p25_ms",
+          "p50_ms",
+          "p75_ms",
+          "p95_ms",
+          "p99_ms"
+        ]
+      },
+      {
+        "title": "MariaDB CPU %",
+        "chart_type": "line",
+        "data_path": "metrics.cpu_percent",
+        "x": "timestamp",
+        "y_series": [
+          "usr_pct",
+          "sys_pct",
+          "irq_pct",
+          "idle_pct"
+        ]
+      },
+      {
+        "title": "MariaDB IOPS",
+        "chart_type": "line",
+        "data_path": "metrics.iops",
+        "x": "timestamp",
+        "y": "value"
+      },
+      {
+        "title": "MariaDB MB/s",
+        "chart_type": "line",
+        "data_path": "metrics.mbps",
+        "x": "timestamp",
+        "y": "value"
+      }
+    ],
+    "notes": [
+      "For TPROC-C, final low transaction_count values may be the end-of-test shutdown tail rather than steady-state throughput.",
+      "Use database_display for human-readable report headings and database for HammerDB internal identifiers."
+    ]
+  },
+  "analysis_hints": {
+    "active_window": {
+      "available": true,
+      "start": "2026-09-27 00:11:42",
+      "end": "2026-09-27 00:18:43",
+      "method": "First to last transaction_count value above shutdown-tail threshold.",
+      "transaction_count_min_active_value": 1000,
+      "recommended_filter": "For charts and narrative summaries, filter transaction_count, CPU, IOPS and MB/s to this active_window."
+    },
+    "shutdown_tail": {
+      "present": true,
+      "threshold": 1000,
+      "note": "Repeated low transaction_count, IOPS and MB/s values after active_window.end are usually the end-of-test shutdown tail and should normally be excluded from charts and summaries."
+    }
+  },
+  "job": {
+    "jobid": "6AB85F34CAB703E263535343",
+    "hdb_version": "v6.0",
+    "database": "MariaDB",
+    "database_display": "MariaDB",
+    "release": "12.3.3",
+    "benchmark": "TPROC-C",
+    "timestamp": "2026-09-27 00:11:32"
+  },
+  "benchmark_config": {
+    "warehouses": 768,
+    "virtual_users": 152,
+    "rampup_minutes": 2,
+    "duration_minutes": 5
+  },
+  "system": {
+    "available": true,
+    "hostname": "localhost",
+    "cpumodel": "AMD EPYC 9B45",
+    "cpucount": "192",
+    "system_vendor": "Google",
+    "system_type": "Google Compute Engine",
+    "os_name": "Ubuntu 24.04.5 LTS",
+    "memory": "1487.8 GB",
+    "nic": "ens19 (100 Gbps)",
+    "storage": "nvme_card-pd (100 GB); nvme_card0 (375 GB); nvme_card3 (375 GB); nvme_card2 (375 GB); nvme_card4 (375 GB); nvme_card1 (375 GB); nvme_card7 (375 GB); nvme_card6 (375 GB); nvme_card5 (375 GB); nvme_card9 (375 GB); nvme_card14 (375 GB); nvme_card8 (375 GB); nvme_card11 (375 GB); nvme_card15 (375 GB); nvme_card10 (375 GB); nvme_card12 (375 GB); nvme_card13 (375 GB)",
+    "cloud_instance": "GCP c4d-highmem-192-lssd"
+  },
+  "result": {
+    "type": "tproc_c_result",
+    "database_display": "MariaDB",
+    "active_virtual_users": 152,
+    "nopm": 2653370,
+    "tpm": 6162972,
+    "chart_data": [
+      {
+        "metric": "NOPM",
+        "value": 2653370
+      },
+      {
+        "metric": "TPM",
+        "value": 6162972
+      }
+    ]
+  },
+  "transaction_count": {
+    "available": true,
+    "series": [
+      {
+        "name": "MariaDB tpm",
+        "database": "MariaDB",
+        "database_display": "MariaDB",
+        "metric": "tpm",
+        "points": [
+          {
+            "timestamp": "2026-09-27 00:11:32",
+            "value": 0
+          },
+          {
+            "timestamp": "2026-09-27 00:11:42",
+            "value": 1140552
+          },
+          {
+            "timestamp": "2026-09-27 00:11:52",
+            "value": 2819958
+          },
+          {
+            "timestamp": "2026-09-27 00:12:02",
+            "value": 3947784
+          },
+          {
+            "timestamp": "2026-09-27 00:12:12",
+            "value": 4790454
+          },
+          {
+            "timestamp": "2026-09-27 00:12:22",
+            "value": 5381322
+          },
+          {
+            "timestamp": "2026-09-27 00:12:32",
+            "value": 5822856
+          },
+          {
+            "timestamp": "2026-09-27 00:12:42",
+            "value": 6157824
+          },
+          {
+            "timestamp": "2026-09-27 00:12:52",
+            "value": 6375114
+          },
+          {
+            "timestamp": "2026-09-27 00:13:02",
+            "value": 6391392
+          },
+          {
+            "timestamp": "2026-09-27 00:13:12",
+            "value": 6382974
+          },
+          {
+            "timestamp": "2026-09-27 00:13:22",
+            "value": 6266610
+          },
+          {
+            "timestamp": "2026-09-27 00:13:32",
+            "value": 6020664
+          },
+          {
+            "timestamp": "2026-09-27 00:13:42",
+            "value": 6115248
+          },
+          {
+            "timestamp": "2026-09-27 00:13:52",
+            "value": 6149334
+          },
+          {
+            "timestamp": "2026-09-27 00:14:02",
+            "value": 6193866
+          },
+          {
+            "timestamp": "2026-09-27 00:14:12",
+            "value": 6210540
+          },
+          {
+            "timestamp": "2026-09-27 00:14:22",
+            "value": 6245610
+          },
+          {
+            "timestamp": "2026-09-27 00:14:32",
+            "value": 6255534
+          },
+          {
+            "timestamp": "2026-09-27 00:14:42",
+            "value": 6270024
+          },
+          {
+            "timestamp": "2026-09-27 00:14:52",
+            "value": 6219324
+          },
+          {
+            "timestamp": "2026-09-27 00:15:02",
+            "value": 6061086
+          },
+          {
+            "timestamp": "2026-09-27 00:15:12",
+            "value": 6089562
+          },
+          {
+            "timestamp": "2026-09-27 00:15:22",
+            "value": 6158106
+          },
+          {
+            "timestamp": "2026-09-27 00:15:32",
+            "value": 6160662
+          },
+          {
+            "timestamp": "2026-09-27 00:15:42",
+            "value": 6223056
+          },
+          {
+            "timestamp": "2026-09-27 00:15:52",
+            "value": 6213264
+          },
+          {
+            "timestamp": "2026-09-27 00:16:02",
+            "value": 6275760
+          },
+          {
+            "timestamp": "2026-09-27 00:16:12",
+            "value": 6264396
+          },
+          {
+            "timestamp": "2026-09-27 00:16:22",
+            "value": 6210954
+          },
+          {
+            "timestamp": "2026-09-27 00:16:32",
+            "value": 6084006
+          },
+          {
+            "timestamp": "2026-09-27 00:16:42",
+            "value": 6114048
+          },
+          {
+            "timestamp": "2026-09-27 00:16:52",
+            "value": 6162048
+          },
+          {
+            "timestamp": "2026-09-27 00:17:02",
+            "value": 6169758
+          },
+          {
+            "timestamp": "2026-09-27 00:17:12",
+            "value": 6230094
+          },
+          {
+            "timestamp": "2026-09-27 00:17:22",
+            "value": 6221688
+          },
+          {
+            "timestamp": "2026-09-27 00:17:32",
+            "value": 6229014
+          },
+          {
+            "timestamp": "2026-09-27 00:17:42",
+            "value": 6200766
+          },
+          {
+            "timestamp": "2026-09-27 00:17:52",
+            "value": 6147342
+          },
+          {
+            "timestamp": "2026-09-27 00:18:02",
+            "value": 5984706
+          },
+          {
+            "timestamp": "2026-09-27 00:18:12",
+            "value": 6069858
+          },
+          {
+            "timestamp": "2026-09-27 00:18:23",
+            "value": 6089988
+          },
+          {
+            "timestamp": "2026-09-27 00:18:33",
+            "value": 5960526
+          },
+          {
+            "timestamp": "2026-09-27 00:18:43",
+            "value": 77352
+          },
+          {
+            "timestamp": "2026-09-27 00:18:53",
+            "value": 0
+          },
+          {
+            "timestamp": "2026-09-27 00:19:03",
+            "value": 0
+          },
+          {
+            "timestamp": "2026-09-27 00:19:13",
+            "value": 0
+          }
+        ]
+      }
+    ]
+  },
+  "response_times": {
+    "type": "boxplot",
+    "unit": "milliseconds",
+    "rows": [
+      {
+        "name": "NEWORD",
+        "elapsed_ms": 382173,
+        "calls": 17873280,
+        "min_ms": 0.264,
+        "avg_ms": 1.754,
+        "max_ms": 50011.541,
+        "total_ms": 31351441.876,
+        "p99_ms": 3.599,
+        "p95_ms": 2.616,
+        "p75_ms": 2.112,
+        "p50_ms": 1.701,
+        "p25_ms": 1.316,
+        "sd": 0.634,
+        "ratio_pct": 53.97
+      },
+      {
+        "name": "PAYMENT",
+        "elapsed_ms": 382173,
+        "calls": 17861716,
+        "min_ms": 0.133,
+        "avg_ms": 0.695,
+        "max_ms": 36.25,
+        "total_ms": 12419350.098,
+        "p99_ms": 2.471,
+        "p95_ms": 1.316,
+        "p75_ms": 0.755,
+        "p50_ms": 0.625,
+        "p25_ms": 0.494,
+        "sd": 0.42,
+        "ratio_pct": 21.379
+      },
+      {
+        "name": "DELIVERY",
+        "elapsed_ms": 382173,
+        "calls": 1785219,
+        "min_ms": 1.071,
+        "avg_ms": 5.294,
+        "max_ms": 40.948,
+        "total_ms": 9451395.886,
+        "p99_ms": 9.462,
+        "p95_ms": 7.333,
+        "p75_ms": 5.87,
+        "p50_ms": 5.337,
+        "p25_ms": 4.836,
+        "sd": 1.325,
+        "ratio_pct": 16.27
+      },
+      {
+        "name": "SLEV",
+        "elapsed_ms": 382173,
+        "calls": 1786137,
+        "min_ms": 0.255,
+        "avg_ms": 1.58,
+        "max_ms": 25.922,
+        "total_ms": 2822741.642,
+        "p99_ms": 2.253,
+        "p95_ms": 2.056,
+        "p75_ms": 1.794,
+        "p50_ms": 1.621,
+        "p25_ms": 1.429,
+        "sd": 0.345,
+        "ratio_pct": 4.859
+      },
+      {
+        "name": "OSTAT",
+        "elapsed_ms": 382173,
+        "calls": 1786156,
+        "min_ms": 0.101,
+        "avg_ms": 0.643,
+        "max_ms": 13.384,
+        "total_ms": 1147793.323,
+        "p99_ms": 1.088,
+        "p95_ms": 0.91,
+        "p75_ms": 0.741,
+        "p50_ms": 0.637,
+        "p25_ms": 0.536,
+        "sd": 0.21,
+        "ratio_pct": 1.976
+      }
+    ]
+  },
+  "metrics": {
+    "available": true,
+    "cpu_percent": [
+      {
+        "timestamp": "2026-09-27 00:11:43",
+        "usr_pct": 4.23,
+        "sys_pct": 0.15,
+        "irq_pct": 0,
+        "idle_pct": 94.55
+      },
+      {
+        "timestamp": "2026-09-27 00:11:53",
+        "usr_pct": 14.41,
+        "sys_pct": 0.53,
+        "irq_pct": 0,
+        "idle_pct": 84.68
+      },
+      {
+        "timestamp": "2026-09-27 00:12:03",
+        "usr_pct": 24.1,
+        "sys_pct": 0.87,
+        "irq_pct": 0,
+        "idle_pct": 74.75
+      },
+      {
+        "timestamp": "2026-09-27 00:12:13",
+        "usr_pct": 33.92,
+        "sys_pct": 1.22,
+        "irq_pct": 0,
+        "idle_pct": 64.59
+      },
+      {
+        "timestamp": "2026-09-27 00:12:23",
+        "usr_pct": 43.66,
+        "sys_pct": 1.66,
+        "irq_pct": 0,
+        "idle_pct": 54.42
+      },
+      {
+        "timestamp": "2026-09-27 00:12:33",
+        "usr_pct": 53.48,
+        "sys_pct": 2.15,
+        "irq_pct": 0,
+        "idle_pct": 44.1
+      },
+      {
+        "timestamp": "2026-09-27 00:12:43",
+        "usr_pct": 63.56,
+        "sys_pct": 2.36,
+        "irq_pct": 0,
+        "idle_pct": 33.79
+      },
+      {
+        "timestamp": "2026-09-27 00:12:53",
+        "usr_pct": 71.85,
+        "sys_pct": 3.14,
+        "irq_pct": 0,
+        "idle_pct": 24.83
+      },
+      {
+        "timestamp": "2026-09-27 00:13:03",
+        "usr_pct": 73.09,
+        "sys_pct": 3.26,
+        "irq_pct": 0,
+        "idle_pct": 23.56
+      },
+      {
+        "timestamp": "2026-09-27 00:13:13",
+        "usr_pct": 72.98,
+        "sys_pct": 3.32,
+        "irq_pct": 0,
+        "idle_pct": 23.58
+      },
+      {
+        "timestamp": "2026-09-27 00:13:23",
+        "usr_pct": 71.38,
+        "sys_pct": 3.91,
+        "irq_pct": 0,
+        "idle_pct": 24.2
+      },
+      {
+        "timestamp": "2026-09-27 00:13:33",
+        "usr_pct": 69.75,
+        "sys_pct": 5.65,
+        "irq_pct": 0,
+        "idle_pct": 24.46
+      },
+      {
+        "timestamp": "2026-09-27 00:13:43",
+        "usr_pct": 70.71,
+        "sys_pct": 5.09,
+        "irq_pct": 0,
+        "idle_pct": 24.07
+      },
+      {
+        "timestamp": "2026-09-27 00:13:53",
+        "usr_pct": 71.17,
+        "sys_pct": 4.77,
+        "irq_pct": 0,
+        "idle_pct": 23.95
+      },
+      {
+        "timestamp": "2026-09-27 00:14:03",
+        "usr_pct": 71.48,
+        "sys_pct": 4.56,
+        "irq_pct": 0,
+        "idle_pct": 23.85
+      },
+      {
+        "timestamp": "2026-09-27 00:14:13",
+        "usr_pct": 71.78,
+        "sys_pct": 4.33,
+        "irq_pct": 0,
+        "idle_pct": 23.77
+      },
+      {
+        "timestamp": "2026-09-27 00:14:23",
+        "usr_pct": 72.24,
+        "sys_pct": 3.94,
+        "irq_pct": 0,
+        "idle_pct": 23.7
+      },
+      {
+        "timestamp": "2026-09-27 00:14:33",
+        "usr_pct": 72.52,
+        "sys_pct": 3.6,
+        "irq_pct": 0,
+        "idle_pct": 23.78
+      },
+      {
+        "timestamp": "2026-09-27 00:14:43",
+        "usr_pct": 72.73,
+        "sys_pct": 3.6,
+        "irq_pct": 0,
+        "idle_pct": 23.56
+      },
+      {
+        "timestamp": "2026-09-27 00:14:53",
+        "usr_pct": 71.7,
+        "sys_pct": 4.1,
+        "irq_pct": 0,
+        "idle_pct": 23.78
+      },
+      {
+        "timestamp": "2026-09-27 00:15:03",
+        "usr_pct": 70.39,
+        "sys_pct": 5.25,
+        "irq_pct": 0,
+        "idle_pct": 24.22
+      },
+      {
+        "timestamp": "2026-09-27 00:15:13",
+        "usr_pct": 70.33,
+        "sys_pct": 5.23,
+        "irq_pct": 0,
+        "idle_pct": 24.31
+      },
+      {
+        "timestamp": "2026-09-27 00:15:23",
+        "usr_pct": 71.1,
+        "sys_pct": 4.8,
+        "irq_pct": 0,
+        "idle_pct": 23.99
+      },
+      {
+        "timestamp": "2026-09-27 00:15:33",
+        "usr_pct": 71.45,
+        "sys_pct": 4.53,
+        "irq_pct": 0,
+        "idle_pct": 23.92
+      },
+      {
+        "timestamp": "2026-09-27 00:15:43",
+        "usr_pct": 71.87,
+        "sys_pct": 4.37,
+        "irq_pct": 0,
+        "idle_pct": 23.66
+      },
+      {
+        "timestamp": "2026-09-27 00:15:53",
+        "usr_pct": 71.9,
+        "sys_pct": 4.23,
+        "irq_pct": 0,
+        "idle_pct": 23.73
+      },
+      {
+        "timestamp": "2026-09-27 00:16:03",
+        "usr_pct": 72.58,
+        "sys_pct": 3.79,
+        "irq_pct": 0,
+        "idle_pct": 23.53
+      },
+      {
+        "timestamp": "2026-09-27 00:16:13",
+        "usr_pct": 72.62,
+        "sys_pct": 3.72,
+        "irq_pct": 0,
+        "idle_pct": 23.56
+      },
+      {
+        "timestamp": "2026-09-27 00:16:23",
+        "usr_pct": 71.74,
+        "sys_pct": 4.09,
+        "irq_pct": 0,
+        "idle_pct": 23.96
+      },
+      {
+        "timestamp": "2026-09-27 00:16:33",
+        "usr_pct": 70.42,
+        "sys_pct": 5.24,
+        "irq_pct": 0,
+        "idle_pct": 24.17
+      },
+      {
+        "timestamp": "2026-09-27 00:16:43",
+        "usr_pct": 70.55,
+        "sys_pct": 5.23,
+        "irq_pct": 0,
+        "idle_pct": 24.09
+      },
+      {
+        "timestamp": "2026-09-27 00:16:53",
+        "usr_pct": 71.29,
+        "sys_pct": 4.81,
+        "irq_pct": 0,
+        "idle_pct": 23.79
+      },
+      {
+        "timestamp": "2026-09-27 00:17:03",
+        "usr_pct": 70.85,
+        "sys_pct": 4.73,
+        "irq_pct": 0,
+        "idle_pct": 24.27
+      },
+      {
+        "timestamp": "2026-09-27 00:17:13",
+        "usr_pct": 70.55,
+        "sys_pct": 4.09,
+        "irq_pct": 0,
+        "idle_pct": 25.25
+      },
+      {
+        "timestamp": "2026-09-27 00:17:23",
+        "usr_pct": 70.91,
+        "sys_pct": 3.85,
+        "irq_pct": 0,
+        "idle_pct": 25.12
+      },
+      {
+        "timestamp": "2026-09-27 00:17:33",
+        "usr_pct": 71.35,
+        "sys_pct": 3.35,
+        "irq_pct": 0,
+        "idle_pct": 25.2
+      },
+      {
+        "timestamp": "2026-09-27 00:17:43",
+        "usr_pct": 70.92,
+        "sys_pct": 3.14,
+        "irq_pct": 0,
+        "idle_pct": 25.84
+      },
+      {
+        "timestamp": "2026-09-27 00:17:53",
+        "usr_pct": 71.38,
+        "sys_pct": 3.23,
+        "irq_pct": 0,
+        "idle_pct": 25.29
+      },
+      {
+        "timestamp": "2026-09-27 00:18:03",
+        "usr_pct": 70.47,
+        "sys_pct": 4.63,
+        "irq_pct": 0,
+        "idle_pct": 24.76
+      },
+      {
+        "timestamp": "2026-09-27 00:18:13",
+        "usr_pct": 70.68,
+        "sys_pct": 4.47,
+        "irq_pct": 0,
+        "idle_pct": 24.71
+      },
+      {
+        "timestamp": "2026-09-27 00:18:23",
+        "usr_pct": 70.7,
+        "sys_pct": 4.2,
+        "irq_pct": 0,
+        "idle_pct": 24.95
+      },
+      {
+        "timestamp": "2026-09-27 00:18:33",
+        "usr_pct": 70.15,
+        "sys_pct": 4.42,
+        "irq_pct": 0,
+        "idle_pct": 25.15
+      },
+      {
+        "timestamp": "2026-09-27 00:18:43",
+        "usr_pct": 1.7,
+        "sys_pct": 0.51,
+        "irq_pct": 0,
+        "idle_pct": 97.37
+      },
+      {
+        "timestamp": "2026-09-27 00:18:53",
+        "usr_pct": 0.44,
+        "sys_pct": 0.12,
+        "irq_pct": 0,
+        "idle_pct": 98.87
+      },
+      {
+        "timestamp": "2026-09-27 00:19:03",
+        "usr_pct": 0.09,
+        "sys_pct": 0.21,
+        "irq_pct": 0,
+        "idle_pct": 99.65
+      },
+      {
+        "timestamp": "2026-09-27 00:19:13",
+        "usr_pct": 0.1,
+        "sys_pct": 0.2,
+        "irq_pct": 0,
+        "idle_pct": 99.65
+      }
+    ],
+    "iops": [
+      {
+        "timestamp": "2026-09-27 00:11:43",
+        "value": 819
+      },
+      {
+        "timestamp": "2026-09-27 00:11:53",
+        "value": 2020
+      },
+      {
+        "timestamp": "2026-09-27 00:12:03",
+        "value": 2892
+      },
+      {
+        "timestamp": "2026-09-27 00:12:13",
+        "value": 3562
+      },
+      {
+        "timestamp": "2026-09-27 00:12:23",
+        "value": 4072
+      },
+      {
+        "timestamp": "2026-09-27 00:12:33",
+        "value": 4443
+      },
+      {
+        "timestamp": "2026-09-27 00:12:43",
+        "value": 4578
+      },
+      {
+        "timestamp": "2026-09-27 00:12:53",
+        "value": 4803
+      },
+      {
+        "timestamp": "2026-09-27 00:13:03",
+        "value": 4806
+      },
+      {
+        "timestamp": "2026-09-27 00:13:13",
+        "value": 4844
+      },
+      {
+        "timestamp": "2026-09-27 00:13:23",
+        "value": 4711
+      },
+      {
+        "timestamp": "2026-09-27 00:13:33",
+        "value": 33518
+      },
+      {
+        "timestamp": "2026-09-27 00:13:43",
+        "value": 27373
+      },
+      {
+        "timestamp": "2026-09-27 00:13:53",
+        "value": 22359
+      },
+      {
+        "timestamp": "2026-09-27 00:14:03",
+        "value": 20241
+      },
+      {
+        "timestamp": "2026-09-27 00:14:13",
+        "value": 18773
+      },
+      {
+        "timestamp": "2026-09-27 00:14:23",
+        "value": 16533
+      },
+      {
+        "timestamp": "2026-09-27 00:14:33",
+        "value": 14088
+      },
+      {
+        "timestamp": "2026-09-27 00:14:43",
+        "value": 13512
+      },
+      {
+        "timestamp": "2026-09-27 00:14:53",
+        "value": 12671
+      },
+      {
+        "timestamp": "2026-09-27 00:15:03",
+        "value": 26391
+      },
+      {
+        "timestamp": "2026-09-27 00:15:13",
+        "value": 26321
+      },
+      {
+        "timestamp": "2026-09-27 00:15:23",
+        "value": 23226
+      },
+      {
+        "timestamp": "2026-09-27 00:15:33",
+        "value": 20526
+      },
+      {
+        "timestamp": "2026-09-27 00:15:43",
+        "value": 19518
+      },
+      {
+        "timestamp": "2026-09-27 00:15:53",
+        "value": 18132
+      },
+      {
+        "timestamp": "2026-09-27 00:16:03",
+        "value": 14822
+      },
+      {
+        "timestamp": "2026-09-27 00:16:13",
+        "value": 14711
+      },
+      {
+        "timestamp": "2026-09-27 00:16:23",
+        "value": 14706
+      },
+      {
+        "timestamp": "2026-09-27 00:16:33",
+        "value": 25219
+      },
+      {
+        "timestamp": "2026-09-27 00:16:43",
+        "value": 24639
+      },
+      {
+        "timestamp": "2026-09-27 00:16:53",
+        "value": 23751
+      },
+      {
+        "timestamp": "2026-09-27 00:17:03",
+        "value": 23329
+      },
+      {
+        "timestamp": "2026-09-27 00:17:13",
+        "value": 20677
+      },
+      {
+        "timestamp": "2026-09-27 00:17:23",
+        "value": 19876
+      },
+      {
+        "timestamp": "2026-09-27 00:17:33",
+        "value": 16781
+      },
+      {
+        "timestamp": "2026-09-27 00:17:43",
+        "value": 15609
+      },
+      {
+        "timestamp": "2026-09-27 00:17:53",
+        "value": 15230
+      },
+      {
+        "timestamp": "2026-09-27 00:18:03",
+        "value": 22752
+      },
+      {
+        "timestamp": "2026-09-27 00:18:13",
+        "value": 23706
+      },
+      {
+        "timestamp": "2026-09-27 00:18:23",
+        "value": 23825
+      },
+      {
+        "timestamp": "2026-09-27 00:18:33",
+        "value": 22922
+      },
+      {
+        "timestamp": "2026-09-27 00:18:43",
+        "value": 6429
+      },
+      {
+        "timestamp": "2026-09-27 00:18:53",
+        "value": 5197
+      },
+      {
+        "timestamp": "2026-09-27 00:19:03",
+        "value": 47143
+      },
+      {
+        "timestamp": "2026-09-27 00:19:13",
+        "value": 48132
+      }
+    ],
+    "mbps": [
+      {
+        "timestamp": "2026-09-27 00:11:43",
+        "value": 89.13
+      },
+      {
+        "timestamp": "2026-09-27 00:11:53",
+        "value": 221.85
+      },
+      {
+        "timestamp": "2026-09-27 00:12:03",
+        "value": 318.34
+      },
+      {
+        "timestamp": "2026-09-27 00:12:13",
+        "value": 401.21
+      },
+      {
+        "timestamp": "2026-09-27 00:12:23",
+        "value": 457.96
+      },
+      {
+        "timestamp": "2026-09-27 00:12:33",
+        "value": 499.35
+      },
+      {
+        "timestamp": "2026-09-27 00:12:43",
+        "value": 527.75
+      },
+      {
+        "timestamp": "2026-09-27 00:12:53",
+        "value": 542.58
+      },
+      {
+        "timestamp": "2026-09-27 00:13:03",
+        "value": 550.95
+      },
+      {
+        "timestamp": "2026-09-27 00:13:13",
+        "value": 544.45
+      },
+      {
+        "timestamp": "2026-09-27 00:13:23",
+        "value": 537.8
+      },
+      {
+        "timestamp": "2026-09-27 00:13:33",
+        "value": 962.87
+      },
+      {
+        "timestamp": "2026-09-27 00:13:43",
+        "value": 875.86
+      },
+      {
+        "timestamp": "2026-09-27 00:13:53",
+        "value": 799.1
+      },
+      {
+        "timestamp": "2026-09-27 00:14:03",
+        "value": 764.68
+      },
+      {
+        "timestamp": "2026-09-27 00:14:13",
+        "value": 745.29
+      },
+      {
+        "timestamp": "2026-09-27 00:14:23",
+        "value": 712.04
+      },
+      {
+        "timestamp": "2026-09-27 00:14:33",
+        "value": 676.68
+      },
+      {
+        "timestamp": "2026-09-27 00:14:43",
+        "value": 664.87
+      },
+      {
+        "timestamp": "2026-09-27 00:14:53",
+        "value": 652.23
+      },
+      {
+        "timestamp": "2026-09-27 00:15:03",
+        "value": 852.08
+      },
+      {
+        "timestamp": "2026-09-27 00:15:13",
+        "value": 853.16
+      },
+      {
+        "timestamp": "2026-09-27 00:15:23",
+        "value": 802.36
+      },
+      {
+        "timestamp": "2026-09-27 00:15:33",
+        "value": 767.56
+      },
+      {
+        "timestamp": "2026-09-27 00:15:43",
+        "value": 752.12
+      },
+      {
+        "timestamp": "2026-09-27 00:15:53",
+        "value": 733.59
+      },
+      {
+        "timestamp": "2026-09-27 00:16:03",
+        "value": 684.94
+      },
+      {
+        "timestamp": "2026-09-27 00:16:13",
+        "value": 685.37
+      },
+      {
+        "timestamp": "2026-09-27 00:16:23",
+        "value": 681.62
+      },
+      {
+        "timestamp": "2026-09-27 00:16:33",
+        "value": 829.64
+      },
+      {
+        "timestamp": "2026-09-27 00:16:43",
+        "value": 828.45
+      },
+      {
+        "timestamp": "2026-09-27 00:16:53",
+        "value": 810.35
+      },
+      {
+        "timestamp": "2026-09-27 00:17:03",
+        "value": 808.61
+      },
+      {
+        "timestamp": "2026-09-27 00:17:13",
+        "value": 762.31
+      },
+      {
+        "timestamp": "2026-09-27 00:17:23",
+        "value": 749.75
+      },
+      {
+        "timestamp": "2026-09-27 00:17:33",
+        "value": 703.13
+      },
+      {
+        "timestamp": "2026-09-27 00:17:43",
+        "value": 674.8
+      },
+      {
+        "timestamp": "2026-09-27 00:17:53",
+        "value": 668.86
+      },
+      {
+        "timestamp": "2026-09-27 00:18:03",
+        "value": 781.31
+      },
+      {
+        "timestamp": "2026-09-27 00:18:13",
+        "value": 798.21
+      },
+      {
+        "timestamp": "2026-09-27 00:18:23",
+        "value": 795.87
+      },
+      {
+        "timestamp": "2026-09-27 00:18:33",
+        "value": 787.5
+      },
+      {
+        "timestamp": "2026-09-27 00:18:43",
+        "value": 202.53
+      },
+      {
+        "timestamp": "2026-09-27 00:18:53",
+        "value": 88.38
+      },
+      {
+        "timestamp": "2026-09-27 00:19:03",
+        "value": 736.64
+      },
+      {
+        "timestamp": "2026-09-27 00:19:13",
+        "value": 752.1
+      }
+    ]
+  },
+  "submission": {
+    "github_username": "mcknightconsulting",
+    "description": "Independent TPROC-C test of MariaDB Enterprise Server 12.3.3 by McKnight Consulting Group, sponsored by MariaDB. The goal was to measure how far the database engine scales across a high core count, so the run is CPU-intensive: the 768-warehouse schema fits entirely in a 256 GB buffer pool and commits are non-durable, which takes disk I/O off the critical path.\n\nHardware: Google Cloud c4d-highmem-192-lssd (us-east1-b), AMD EPYC 9B45 (Turin), 1 socket, 96 cores, SMT on (192 vCPU), single NUMA node, 1.5 TB RAM. Storage: 16 x 375 GB Local SSD in mdadm RAID 0, ext4. Ubuntu 24.04.5, kernel 7.0. HammerDB ran on the same VM over a Unix socket.\n\nWorkload: 768 warehouses, stored procedures, no keying/thinking time, Use All Warehouses off, 2 min ramp-up + 5 min timed. This job is the 152-VU point of a ladder (64-216 VU) and was the peak. The buffer pool was flushed clean before each point.\n\nTuning versus a stock config: innodb_io_capacity 5000 / io_capacity_max 40000, max_dirty_pages_pct 90 / lwm 0, adaptive_flushing_lwm 10, purge_threads 32 / purge_batch_size 5000, innodb_deadlock_detect OFF (true deadlocks resolve via the 50 s lock wait timeout), thread pool (pool-of-threads, size 192).",
+    "company": {
+      "name": "McKnight Consulting Group",
+      "logo_url": "https://mcknightcg.com/wp-content/uploads/2020/02/mcknight-logo.png",
+      "description": "An independent data and AI consultancy specializing in enterprise data strategy, architecture, performance benchmarking, and business-driven technology transformation"
+    },
+    "workload": {
+      "classification": "cpu-intensive",
+      "use_all_warehouses": false,
+      "durability": "relaxed",
+      "details": "innodb_flush_log_at_trx_commit=0; skip_log_bin=1 (no binary log, sync_binlog n/a); innodb_doublewrite=0; innodb_buffer_pool_size=256G with innodb_log_file_size=64G (768-warehouse schema fully cached); Use All Warehouses disabled. Other: innodb_io_capacity=5000, innodb_io_capacity_max=40000, innodb_max_dirty_pages_pct=90, innodb_max_dirty_pages_pct_lwm=0, innodb_adaptive_flushing_lwm=10, innodb_purge_threads=32, innodb_purge_batch_size=5000, innodb_deadlock_detect=OFF, thread_handling=pool-of-threads, table_open_cache_instances=31, innodb_adaptive_hash_index=0, performance_schema=OFF."
+    }
+  }
+}
