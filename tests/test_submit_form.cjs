@@ -122,7 +122,7 @@ test("one click POSTs result and then opens only GitHub authorization",async()=>
   const p=await mount();
   assert.equal(p.get("submit-section").hidden,false);
   await p.submit();
-  const post=p.requests.find(q=>q.url.includes("/submissions"));
+  const post=p.requests.find(q=>q.url.endsWith("/submissions"));
   assert.ok(post);
   assert.equal(post.opts.method,"POST");
   const request=JSON.parse(post.opts.body);
