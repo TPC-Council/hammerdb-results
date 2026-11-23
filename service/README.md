@@ -18,11 +18,11 @@ current TPC-Council repository after a maintainer merges the code PR.
   Cloudflare **account** can open PRs against TPC-Council, with user OAuth
   verification. This does **not** mean transferring the repository or giving
   `sm-shaw` / HammerDB Ltd personal Write access.
-- **Reviewed-result transfer:** accept one validated JSON draft from specifically
-  allowed local assistant/browser origins. No draft is submitted automatically:
-  a human checks the form, clicks Submit, authorises GitHub, and the resulting
-  PR awaits maintainer review. Externally hosted assistant sites require their
-  exact HTTPS origins to be approved and added separately.
+- **Reviewed-result transfer:** accept one validated JSON draft from **any
+  HTTP(S) website, hostname, IP address or port** (not just localhost).
+  A sender does not need to be registered or allowlisted. No draft is
+  submitted automatically: a human checks the form, clicks Submit,
+  authorises GitHub, and the resulting PR awaits maintainer review.
 
 **Rollout safety:** `site/submission-service-config.js` deliberately contains
 `endpoint: ""`. The manual option remains the default and usable on the
@@ -88,8 +88,15 @@ at the existing **HammerDB Ltd-only** Worker.
   exact matching target and the verified GitHub OAuth user.
 - A pending draft lives in the separate private KV for up to 15 minutes.
   The Worker restricts browser POST origins to the exact configured TPC site.
-- A user-facing handoff uses an allowlisted origin, one-use nonce, exact
-  `postMessage` source, a SHA-256 checksum and a two-minute timeout.
+- A user-facing handoff permits any HTTP(S) sender address/port while
+  verifying a one-use nonce, binding the originating window **and its origin**
+  for the whole handshake, checking the SHA-256 checksum and enforcing a
+  two-minute timeout. No handoff sends a PR by itself; user review and GitHub
+  authorisation are required. A checksum verifies transfer integrity, not
+  independent benchmark authenticity (maintainer PR review still applies).
+- This applies to the **incoming browser-to-form handoff**. The separate TPC
+  Worker still accepts PR-creation requests only **from the official TPC
+  submission form origin**; contributors may access that form from anywhere.
 - Neither route merges automatically; both create reviewable PRs.
 - GitHub App access tokens are treated as opaque strings. The forthcoming
   stateless/longer token format should not require a token-length assumption,
