@@ -375,12 +375,13 @@
     window.open(url, "_blank", "noopener");
     status("Continue on GitHub", "Paste the generated JSON into the editor and open a pull request using the GitHub account you declared.", "success");
   });
+  let serviceReady=false, modeChosenByUser=false;
+  const submissionEndpoint=String(window.HammerDBSubmissionAPI?.endpoint || "").replace(/[/]+$/, "");
   function updatePrMode(){
-    // TPC-Council rollout: manual submission stays available until a TPC-only
-    // Worker, with its own KV and GitHub App installation, is approved and tested.
-    const enabled=Boolean(String(window.HammerDBSubmissionAPI?.endpoint || "").trim());
+    // Never expose an unusable automatic route; keep manual PRs available.
+    const enabled=Boolean(submissionEndpoint)&&serviceReady;
+    $("pr-auto").disabled=!enabled;
     if(!enabled){
-      $("pr-auto").disabled=true;
       $("pr-auto").checked=false;
       $("pr-manual").checked=true;
     }
@@ -400,18 +401,35 @@
   window.addEventListener?.("pageshow", () => {
     $("continue-github").disabled = false;
   });
-  $("pr-auto").addEventListener("change",updatePrMode);
-  $("pr-manual").addEventListener("change",updatePrMode);
+  $("pr-auto").addEventListener("change",()=>{modeChosenByUser=true;updatePrMode();});
+  $("pr-manual").addEventListener("change",()=>{modeChosenByUser=true;updatePrMode();});
   updatePrMode();
+  // A single PR can carry the eventual Worker URL safely: the manual route
+  // remains available while Cloudflare/App approval is still being configured.
+  // When the independent TPC Worker is live, the automatic route turns on.
+  if(submissionEndpoint){
+    fetch(submissionEndpoint+"/health").then(response=>{
+      if(!response.ok)throw Error("Submission service unavailable");
+      return response.json();
+    }).then(data=>{
+      if(data.status!=="ok"||data.configured!==true)return;
+      serviceReady=true;
+      if(!modeChosenByUser){
+        $("pr-auto").checked=true;
+        $("pr-manual").checked=false;
+      }
+      updatePrMode();
+    }).catch(()=>{serviceReady=false;updatePrMode();});
+  }
   $("continue-github").addEventListener("click", async () => {
     let json;
     try { json = buildSubmission(); } catch (error) {
       status("Check submission details", error.message, "error"); return;
     }
-    const endpoint = String(window.HammerDBSubmissionAPI?.endpoint || "").replace(/[/]+$/, "");
-    if (!endpoint) {
+    const endpoint = submissionEndpoint;
+    if (!endpoint || !serviceReady) {
       status("Submission service not configured",
-        "Automatic PR creation is not yet enabled for TPC-Council. Use the manual submission option. No data has been submitted.", "error");
+        "Automatic PR creation is not yet available for TPC-Council. Use the manual submission option. No data has been submitted.", "error");
       return;
     }
     const button = $("continue-github");
@@ -438,7 +456,7 @@
     load: async (raw) => {
       await loadArtifact(raw, { source: "transfer" });
       if (!ready || JSON.stringify(artifact) !== JSON.stringify(JSON.parse(raw))) throw Error("The transferred result did not pass validation.");
-      const automatic = Boolean(String(window.HammerDBSubmissionAPI?.endpoint || "").trim()) && !$("pr-auto").disabled;
+      const automatic = serviceReady && !$("pr-auto").disabled;
       $("pr-auto").checked = automatic;
       $("pr-manual").checked = !automatic;
       updatePrMode();
