@@ -120,7 +120,7 @@
     return '<details class="configuration-evidence"><summary>' + (row.workload_class === "unclassified" ? "View recorded configuration" : "Why is this labelled " + esc(row.workload_class === "io-intensive" ? "I/O-intensive" : "CPU-intensive")) +
       '?</summary><p><strong>Submitter-declared configuration.</strong> UAW: ' + esc(uaw) +
       " · Durability: " + esc(durability) + "\n" + esc(row.workload_details || "") +
-      '\nThis describes the test configuration, not a diagnosis of the hardware bottleneck.</p></details>';
+      '</p></details>';
   }
 
   function card(row, rank, topNopm) {
