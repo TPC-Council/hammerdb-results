@@ -434,7 +434,6 @@
     }
   });
   window.HammerDBResultHandoff?.receive({
-    allowedOrigins: window.HammerDBSubmissionHandoff?.allowedOrigins || [],
     status,
     load: async (raw) => {
       await loadArtifact(raw, { source: "transfer" });
