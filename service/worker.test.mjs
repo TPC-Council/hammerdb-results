@@ -184,3 +184,23 @@ test("preflight limits cross-origin access",async()=>{
   ),p.env,p.fetchImpl);
   assert.equal(denied.status,403);
 });
+
+test("readiness is visible only to the official TPC-Council submission site",async()=>{
+  const p=setup();
+  const url="https://submissions.example.workers.dev/health";
+  const official=await handleRequest(new Request(url,{
+    headers:{Origin:"https://tpc-council.github.io"}
+  }),p.env,p.fetchImpl);
+  assert.equal(official.status,200);
+  assert.equal(official.headers.get("Access-Control-Allow-Origin"),p.env.ALLOWED_ORIGIN);
+  assert.deepEqual(await official.json(),{status:"ok",configured:true});
+  const external=await handleRequest(new Request(url,{
+    headers:{Origin:"https://unrelated.example"}
+  }),p.env,p.fetchImpl);
+  assert.equal(external.headers.has("Access-Control-Allow-Origin"),false);
+  const unavailable=setup({configured:false});
+  const off=await handleRequest(new Request(url,{
+    headers:{Origin:"https://tpc-council.github.io"}
+  }),unavailable.env,unavailable.fetchImpl);
+  assert.equal((await off.json()).configured,false);
+});
