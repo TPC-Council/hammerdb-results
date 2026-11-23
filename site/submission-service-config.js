@@ -9,13 +9,6 @@ window.HammerDBSubmissionAPI = Object.freeze({
   endpoint: ""
 });
 
-// Only approved senders may transfer a reviewed result; this does not submit it.
-// Existing tested local/SSH-forwarded assistant origins. Any externally hosted
-// assistant must have its exact HTTPS origin separately approved and added.
-window.HammerDBSubmissionHandoff = Object.freeze({
-  allowedOrigins: Object.freeze([
-    "http://localhost:18093", "http://127.0.0.1:18093",
-    "http://localhost:18094", "http://127.0.0.1:18094",
-    "http://localhost:18194", "http://127.0.0.1:18194"
-  ])
-});
+// Any HTTP(S) website and port may initiate a reviewed-result handoff.
+// The receiver still checks the one-use nonce, sender window/origin, checksum
+// and form validation. No handoff can submit a PR without user approval.
