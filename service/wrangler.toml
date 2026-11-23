@@ -1,0 +1,17 @@
+# TPC-Council-specific deployment in the EXISTING HammerDB Cloudflare account.
+# This is a separate Worker instance; do not change the working HammerDB Ltd Worker.
+# Requires TPC-Council approval for the existing HammerDB GitHub App installation.
+name = "hammerdb-results-tpc-submit"
+main = "worker.mjs"
+compatibility_date = "2026-11-13"
+
+[vars]
+GITHUB_TARGET_OWNER = "TPC-Council"
+GITHUB_TARGET_REPO = "hammerdb-results"
+ALLOWED_ORIGIN = "https://tpc-council.github.io"
+
+# Create a separate KV namespace in the same Cloudflare account and insert its ID.
+# NEVER commit client secrets, installation tokens or private keys.
+[[kv_namespaces]]
+binding = "PENDING"
+id = "REPLACE_WITH_TPC_PENDING_KV_NAMESPACE_ID"
