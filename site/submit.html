@@ -15,6 +15,8 @@
   <title>Submit a benchmark · HammerDB Community Results</title>
   <script src="repository-context.js"></script>
   <script src="repository.js"></script>
+  <script src="submission-service-config.js"></script>
+  <script src="submission-handoff.js"></script>
   <link rel="stylesheet" href="leaderboard.css">
   <style>
     .submit-branding{display:grid;grid-template-columns:105px minmax(0,1fr) 105px;align-items:center;gap:18px}.submit-branding h1{font-size:30px;line-height:1.15;margin:0 0 9px}.submit-branding .masthead-logo-white{height:90px;min-height:90px}.submit-branding .masthead-logo-white img{max-width:100%;max-height:72px;object-fit:contain}@media(max-width:630px){.submit-branding{grid-template-columns:64px 64px;gap:10px}.submit-branding>div{grid-column:1/-1;grid-row:2}.submit-branding .masthead-logo-white{height:70px;min-height:70px}}
@@ -54,6 +56,7 @@
     .submit-actions{display:flex;flex-wrap:wrap;gap:11px;margin-top:15px}
     .submit-actions button{border:0;cursor:pointer}
     .submit-actions button:disabled{opacity:.4;cursor:not-allowed}
+     .submit-actions[hidden]{display:none!important}
     .submit-actions .copy-button{padding:12px 17px;border:1px solid var(--border);border-radius:11px;background:var(--surface-raised);color:var(--text);font-weight:850}
     .help-panel{position:sticky;top:100px}
     .help-panel h3{font-size:18px;margin-bottom:10px}
@@ -79,7 +82,7 @@
   <div class="submit-flow">
     <div class="flow-main">
       <section class="submit-panel"><div class="panel-title"><span class="step-index">1</span><div><h2>Select your result artifact</h2><p>Use the JSON downloaded from HammerDB. The benchmark data and configuration are preserved.</p></div></div>
-        <div id="drop-zone" class="upload-zone"><div class="upload-icon" aria-hidden="true">⇧</div><strong>Drop your JSON artifact here</strong><p>or choose a file from your computer</p><button type="button" class="file-choose" id="choose-file">Choose JSON artifact</button><input id="artifact-file" type="file" accept="application/json,.json" hidden></div>
+        <div id="drop-zone" class="upload-zone"><div class="upload-icon" aria-hidden="true">⇧</div><strong id="artifact-load-title">Drop your JSON artifact here</strong><p id="artifact-load-hint">or choose a file from your computer</p><button type="button" class="file-choose" id="choose-file">Choose JSON artifact</button><input id="artifact-file" type="file" accept="application/json,.json" hidden></div>
         <div id="preview" hidden><div class="preview-stats" id="preview-data"></div><p class="field-note">Result location: <code id="result-path"></code></p></div>
       </section>
       <section class="submit-panel" id="details-section" hidden><div class="panel-title"><span class="step-index">2</span><div><h2>Who is submitting this result?</h2><p>Attribution is shown on the leaderboard and links directly to the submitter's GitHub profile.</p></div></div>
@@ -98,11 +101,17 @@
           <div class="field"><label for="durability-setting">Database durability configuration</label><select id="durability-setting"><option value="unknown">Not recorded</option><option value="full">Full / synchronous durability</option><option value="relaxed">Relaxed / asynchronous commit</option></select><div class="field-note">Database transaction-log and commit behaviour, not inferred from storage telemetry.</div></div>
         </div>
         <div class="field"><label for="workload-details">Evidence / configuration settings</label><textarea id="workload-details" maxlength="1200" rows="5" placeholder="Describe settings such as use all warehouses, innodb_flush_log_at_trx_commit, sync_binlog, synchronous_commit, SQL Server durability, log I/O and buffer sizes."></textarea><div class="field-note">Required (20 characters minimum) for a CPU- or I/O-intensive badge. Can be based on a manual run; no pipeline required.</div></div>
-        <div id="workload-help" class="declare-note">Older results lacking UAW and durability data remain unclassified. IOPS / MB/s by themselves do not prove a bottleneck.</div>
+        <div id="workload-help" class="declare-note">Older results lacking UAW and durability data remain unclassified.</div>
       </section>
-      <section class="submit-panel" id="submit-section" hidden><div class="panel-title"><span class="step-index">4</span><div><h2>Review and submit through GitHub</h2><p>Your artifact will contain the benchmark evidence plus your additional submission information.</p></div></div>
-        <div class="submit-actions"><button type="button" class="copy-button" id="copy-json">Copy enriched JSON</button><button type="button" class="action action-primary" id="continue-github">Continue to GitHub ↗</button></div>
-        <p class="field-note">On GitHub paste the copied JSON into the new file, commit, and open a pull request. The contributor's GitHub login is checked against the value you entered.</p>
+      <section class="submit-panel" id="submit-section" hidden><div class="panel-title"><span class="step-index">4</span><div><h2>Submit result</h2><p>Choose whether HammerDB creates the pull request with your GitHub authorisation or you create it yourself.</p></div></div>
+        <fieldset class="pr-choice" style="padding:14px 17px;border:1px solid var(--border);border-radius:11px">
+          <legend><strong>Pull request — how would you like to submit?</strong></legend>
+          <label style="display:block;margin:8px 0"><input type="radio" id="pr-auto" name="pr-mode" value="auto" checked> <strong>Do it for me</strong> — Authorise GitHub access; HammerDB creates the PR automatically</label>
+          <label style="display:block;margin:8px 0"><input type="radio" id="pr-manual" name="pr-mode" value="manual"> <strong>I'll create my own PR</strong> — Sign in to my GitHub account, authorise if prompted, and submit the PR myself</label>
+        </fieldset>
+        <div class="submit-actions" id="auto-pr-actions"><button type="button" class="action action-primary" id="continue-github">Submit result ↗</button></div>
+        <div class="submit-actions" id="manual-pr-actions" hidden><button type="button" class="copy-button" id="copy-json">Copy enriched JSON</button><button type="button" class="action action-primary" id="manual-continue-github">Continue to GitHub ↗</button></div>
+        <p class="field-note" id="pr-mode-description">One click submits your result for review. GitHub may ask you to sign in or authorize the HammerDB submission app once; then your pull request opens automatically.</p>
         <div class="safeguard">These are community-submitted, unaudited results. A workload badge describes declared configuration, not a measured finding of CPU or storage saturation.</div>
         <details class="raw-preview"><summary>Inspect the generated JSON</summary><pre id="generated-json">Select an artifact to preview.</pre></details>
       </section>
@@ -111,9 +120,9 @@
       <ol><li><strong>Choose the original artifact.</strong> No pipeline or additional config file is required to upload it.</li>
       <li><strong>Identify the submitter.</strong> Add your GitHub account, optional company logo and description.</li>
       <li><strong>Declare workload intent.</strong> For TPROC-C, record UAW and durability settings or leave it unclassified.</li>
-      <li><strong>Review on GitHub.</strong> Copy the enriched JSON, submit it to the repository hosting this leaderboard, and open a PR.</li></ol>
+      <li><strong>Submit.</strong> Click Submit result and review your GitHub pull request.</li></ol>
       <div class="help-divider"></div>
-      <p><strong>Important:</strong> Submission target: <a data-repository-link href="https://github.com/HammerDBLtd/hammerdb-results"><span data-repository-name>Loading repository…</span></a>. On TPC-Council Pages, contributors propose changes by PR to TPC-Council. This form does not write files directly.</p>
+      <p><strong>Important:</strong> Submission target: <a data-repository-link href="https://github.com/TPC-Council/hammerdb-results"><span data-repository-name>Loading repository…</span></a>. Automatic submissions create PRs through the authorised HammerDB GitHub App; manual submissions use your GitHub account. A maintainer approves and merges either PR.</p>
       <p>UAW increases data-area I/O, but performance graphs alone cannot establish the workload category. <a href="https://www.hammerdb.com/docs/ch04s08.html" target="_blank" rel="noopener noreferrer">HammerDB UAW documentation</a>.</p>
     </aside>
   </div>
@@ -215,14 +224,25 @@
     if (response.ok) return true;
     throw Error("GitHub returned HTTP " + response.status);
   }
+  function resultLoaded(source, job) {
+    $("artifact-load-title").textContent = source === "transfer" ? "Result received from HammerDB" : "Result loaded";
+    $("artifact-load-hint").textContent = "Job " + job.jobid + " is ready to review. Choosing another result is optional.";
+    $("choose-file").textContent = "Choose a different result";
+  }
   function reset() {
+    // A previous OAuth navigation may have disabled Submit; never carry that
+    // disabled state into a newly uploaded artifact.
+    $("continue-github").disabled = false;
     artifact = null; resultPath = ""; ready = false; validationId++;
+    $("artifact-load-title").textContent = "Drop your JSON artifact here";
+    $("artifact-load-hint").textContent = "or choose a file from your computer";
+    $("choose-file").textContent = "Choose JSON artifact";
     $("preview").hidden = true;
     ["details-section", "workload-section", "submit-section"].forEach((id) => $(id).hidden = true);
     fields.forEach((id) => { if ($(id).tagName === "SELECT") $(id).selectedIndex = 0; else $(id).value = ""; });
     $("generated-json").textContent = "Select an artifact to preview.";
   }
-  async function loadArtifact(raw) {
+  async function loadArtifact(raw, { source = "file" } = {}) {
     reset();
     const id = validationId;
     let parsed;
@@ -243,12 +263,13 @@
     renderPreview(parsed);
     $("result-path").textContent = path;
     prefillConfig(parsed);
-    status("Checking for duplicates", "Checking whether this result is already in HammerDB Ltd…");
+    status("Checking for duplicates", "Checking whether this result is already in "+TARGET_OWNER+"/"+TARGET_REPO+"…");
     try {
       const exists = await existsInRepo(path);
       if (id !== validationId) return;
       if (exists) { status("Result already exists", "The artifact is already published under this job ID. Use a new result or update it by reviewing the existing file.", "error"); return; }
       ready = true;
+      resultLoaded(source, job);
       $("details-section").hidden = false;
       $("workload-section").hidden = job.benchmark !== "TPROC-C";
       $("submit-section").hidden = false;
@@ -313,6 +334,21 @@
     try { $("generated-json").textContent = buildSubmission(); }
     catch (error) { $("generated-json").textContent = "Complete the required fields to preview enriched JSON.\n" + error.message; }
   }
+
+  $("choose-file").addEventListener("click", () => $("artifact-file").click());
+  $("artifact-file").addEventListener("change", async () => {
+    const file = $("artifact-file").files[0]; if (file) await loadArtifact(await file.text());
+  });
+  const zone = $("drop-zone");
+  zone.addEventListener("dragover", (event) => { event.preventDefault(); zone.classList.add("dragging"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("dragging"));
+  zone.addEventListener("drop", async (event) => {
+    event.preventDefault(); zone.classList.remove("dragging");
+    if (event.dataTransfer.files[0]) await loadArtifact(await event.dataTransfer.files[0].text());
+  });
+  fields.forEach((id) => $(id).addEventListener("input", updateGeneratedPreview));
+  // Preserve the existing TPC-Council manual PR process:
+  // copy enriched JSON, open GitHub's new-file editor, then commit and open PR.
   async function copyJson() {
     let json;
     try { json = buildSubmission(); } catch (error) { status("Check submission details", error.message, "error"); return false; }
@@ -327,21 +363,8 @@
       return false;
     }
   }
-
-  $("choose-file").addEventListener("click", () => $("artifact-file").click());
-  $("artifact-file").addEventListener("change", async () => {
-    const file = $("artifact-file").files[0]; if (file) await loadArtifact(await file.text());
-  });
-  const zone = $("drop-zone");
-  zone.addEventListener("dragover", (event) => { event.preventDefault(); zone.classList.add("dragging"); });
-  zone.addEventListener("dragleave", () => zone.classList.remove("dragging"));
-  zone.addEventListener("drop", async (event) => {
-    event.preventDefault(); zone.classList.remove("dragging");
-    if (event.dataTransfer.files[0]) await loadArtifact(await event.dataTransfer.files[0].text());
-  });
-  fields.forEach((id) => $(id).addEventListener("input", updateGeneratedPreview));
   $("copy-json").addEventListener("click", copyJson);
-  $("continue-github").addEventListener("click", async () => {
+  $("manual-continue-github").addEventListener("click", async () => {
     let json;
     try { json = buildSubmission(); } catch (error) { status("Check submission details", error.message, "error"); return; }
     $("generated-json").textContent = json;
@@ -351,6 +374,76 @@
       TARGET_BRANCH + "?filename=" + encodeURIComponent(resultPath);
     window.open(url, "_blank", "noopener");
     status("Continue on GitHub", "Paste the generated JSON into the editor and open a pull request using the GitHub account you declared.", "success");
+  });
+  function updatePrMode(){
+    // TPC-Council rollout: manual submission stays available until a TPC-only
+    // Worker, with its own KV and GitHub App installation, is approved and tested.
+    const enabled=Boolean(String(window.HammerDBSubmissionAPI?.endpoint || "").trim());
+    if(!enabled){
+      $("pr-auto").disabled=true;
+      $("pr-auto").checked=false;
+      $("pr-manual").checked=true;
+    }
+    // Switching PR routes must not inherit a disabled button from OAuth.
+    $("continue-github").disabled = false;
+    const manual=$("pr-manual").checked;
+    $("auto-pr-actions").hidden = manual;
+    $("manual-pr-actions").hidden = !manual;
+    $("pr-mode-description").textContent=manual
+      ? (enabled
+        ? "Copy enriched JSON and continue to GitHub to commit it and open your own PR."
+        : "Manual GitHub PR submission is available now. Automatic submission will be enabled after TPC-Council administrator approval and a separate TPC service test.")
+      : "One click submits your result for review. GitHub may ask you to sign in or authorize the HammerDB submission app once.";
+  }
+  // Browsers can restore a page from the back/forward cache after GitHub
+  // authorization, including the button's transient disabled state.
+  window.addEventListener?.("pageshow", () => {
+    $("continue-github").disabled = false;
+  });
+  $("pr-auto").addEventListener("change",updatePrMode);
+  $("pr-manual").addEventListener("change",updatePrMode);
+  updatePrMode();
+  $("continue-github").addEventListener("click", async () => {
+    let json;
+    try { json = buildSubmission(); } catch (error) {
+      status("Check submission details", error.message, "error"); return;
+    }
+    const endpoint = String(window.HammerDBSubmissionAPI?.endpoint || "").replace(/[/]+$/, "");
+    if (!endpoint) {
+      status("Submission service not configured",
+        "Automatic PR creation is not yet enabled for TPC-Council. Use the manual submission option. No data has been submitted.", "error");
+      return;
+    }
+    const button = $("continue-github");
+    button.disabled = true;
+    status("Creating your pull request", "Verifying the result and connecting securely to GitHub…");
+    try {
+      const response = await fetch(endpoint + "/submissions", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({artifact:JSON.parse(json),target:TARGET_OWNER+"/"+TARGET_REPO})
+      });
+      const payload = await response.json();
+      if (!response.ok) throw Error(payload.error || "Submission service is unavailable");
+      if (!/^https:\/\/github\.com\/login\/oauth\/authorize\?/.test(payload.authorizeUrl || ""))
+        throw Error("Unexpected GitHub authorization URL");
+      window.location.assign(payload.authorizeUrl);
+    } catch(error) {
+      button.disabled = false;
+      status("Submission not sent", error.message + ". Your completed form is still here.", "error");
+    }
+  });
+  window.HammerDBResultHandoff?.receive({
+    allowedOrigins: window.HammerDBSubmissionHandoff?.allowedOrigins || [],
+    status,
+    load: async (raw) => {
+      await loadArtifact(raw, { source: "transfer" });
+      if (!ready || JSON.stringify(artifact) !== JSON.stringify(JSON.parse(raw))) throw Error("The transferred result did not pass validation.");
+      const automatic = Boolean(String(window.HammerDBSubmissionAPI?.endpoint || "").trim()) && !$("pr-auto").disabled;
+      $("pr-auto").checked = automatic;
+      $("pr-manual").checked = !automatic;
+      updatePrMode();
+    }
   });
   const artifactUrl = new URLSearchParams(location.search).get("artifact_url");
   if (artifactUrl) {
