@@ -5,20 +5,25 @@
   else root.HammerDBResultHandoff=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  function receive({load,allowedOrigins=[],window:win=globalThis,crypto:cryptoAPI=globalThis.crypto,status=()=>{}}){
+  function receive({load,window:win=globalThis,crypto:cryptoAPI=globalThis.crypto,status=()=>{}}){
     const nonce=new URL(win.location.href).searchParams.get('handoff');
     if(!/^[a-f0-9]{64}$/.test(nonce||''))return ()=>{};
-    const origins=new Set(allowedOrigins.filter(origin=>{
-      try{const url=new URL(origin);return url.origin===origin&&(url.protocol==='https:'||url.protocol==='http:'&&['localhost','127.0.0.1'].includes(url.hostname));}catch{return false;}
-    }));
     let sender=null,sourceOrigin='',used=false;
     const timer=win.setTimeout(stop,120000);
     function stop(){win.removeEventListener('message',message);win.clearTimeout(timer);}
     function reply(stage,sha256){sender.postMessage({type:'hammerdb-result-handoff',version:1,nonce,stage,...(sha256?{sha256}:{})},sourceOrigin);}
     async function message(event){
       const data=event.data;
-      if(!origins.has(event.origin)||!event.source||event.source===win||!data||data.type!=='hammerdb-result-handoff'||data.version!==1||data.nonce!==nonce)return;
-      if(sender&&event.source!==sender)return;
+      // Any HTTP(S) website or port may send a reviewed draft. The originating
+      // site is not an authority for publication: the person must still inspect
+      // the form and explicitly submit/authorise a reviewable GitHub PR.
+      let parsedOrigin;
+      try{parsedOrigin=new URL(event.origin);}catch{return;}
+      if((parsedOrigin.protocol!=='https:'&&parsedOrigin.protocol!=='http:')||
+          parsedOrigin.origin!==event.origin||!event.source||event.source===win||
+          !data||data.type!=='hammerdb-result-handoff'||data.version!==1||data.nonce!==nonce)return;
+      // A single sender window AND its actual origin are bound by the handshake.
+      if(sender&&(event.source!==sender||event.origin!==sourceOrigin))return;
       if(data.stage==='hello'&&!used){sender=event.source;sourceOrigin=event.origin;reply('ready');return;}
       if(data.stage!=='artifact'||!sender||used)return;
       used=true;
