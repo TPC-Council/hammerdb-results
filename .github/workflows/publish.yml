@@ -29,6 +29,9 @@ jobs:
       - name: Test comment form
         run: node --test tests/test_annotation_form.cjs
 
+      - name: Test authenticated and manual result submission, plus reviewed-result handoff
+        run: node --test tests/test_submit_form.cjs service/worker.test.mjs
+
       - name: Build leaderboard
         run: python tools/build_leaderboard.py
 
