@@ -24,13 +24,16 @@ current TPC-Council repository after a maintainer merges the code PR.
   submitted automatically: a human checks the form, clicks Submit,
   authorises GitHub, and the resulting PR awaits maintainer review.
 
-**Rollout safety:** `site/submission-service-config.js` deliberately contains
-`endpoint: ""`. The manual option remains the default and usable on the
-published TPC-Council site; the automatic option is disabled until there is an
-approved, independently tested TPC-targeted service. Never point the TPC site
-at the existing **HammerDB Ltd-only** Worker.
+**Single-PR rollout:** PR #19 includes the planned endpoint
+`https://hammerdb-results-tpc-submit.hammerdb.workers.dev` for the **separate**
+TPC-Council Worker. The form first checks `/health`; **until that Worker is
+configured and running, automatic submission stays disabled and the existing
+manual PR route remains usable**. When the TPC Worker becomes ready, the same
+merged code enables automatic submission **without a second PR**. The Worker URL
+is a deployment target, **not a claim that it has been deployed**. Never point
+the TPC form at the existing **HammerDB Ltd-only** Worker.
 
-## TPC-Council administrator: before approving the code PR
+## TPC-Council administrator: approve the existing App request and PR #19
 
 1. Review the branch as a normal fork PR. The diff must include **no changes
    to `results/`, `submissions/`, `site/leaderboard.json`,
@@ -38,27 +41,24 @@ at the existing **HammerDB Ltd-only** Worker.
    context**. All TPC community results remain.
 2. If GitHub asks, choose **Approve workflows to run** for the fork PR, then
    check validation is green. Review and merge only when satisfied.
-3. Agree in principle to allow the existing HammerDB Ltd-owned public
-   GitHub App `hammerdb-results-submit` on **only**
+3. Approve the **already-submitted installation request** for the existing
+   HammerDB Ltd-owned public GitHub App `hammerdb-results-submit` on **only**
    `TPC-Council/hammerdb-results` with repository Contents **read/write** and
-   Pull requests **read/write** (Metadata read is automatic). **App installation
-   is not required for the initial code PR to merge** because auto submission
-   stays disabled.
-4. No TPC-Council organisation ownership change, repository transfer, new
+   Pull requests **read/write** (Metadata read is automatic).
+4. The Actions repository variable
+   `SUBMISSION_APP_BOT_LOGIN=hammerdb-results-submit[bot]` has **already
+   been configured** by the contributor; the Council may verify it. The exact
+   approved App bot may then author `submission/` branches in the SAME
+   TPC-Council repo without weakening human PR attribution checks.
+5. Review/merge **the one PR #19**. No follow-up activation PR is required.
+   If the separate Cloudflare Worker has not yet been deployed, automatic
+   submission remains disabled but manual submission continues to work.
+6. No TPC-Council organisation ownership change, repository transfer, new
    GitHub App, Cloudflare account, or personal Write access is required.
 
-## TPC-Council administrator: after merging, before enabling automatic PRs
+## HammerDB Ltd: configure the TPC Worker in the existing Cloudflare account
 
-1. A TPC-Council organisation owner / authorised GitHub App manager installs
-   or approves **the existing App** for **only the `hammerdb-results`
-   repository**. The App stays owned by HammerDB Ltd, retaining the branded
-   HammerDB icon.
-2. A TPC repository administrator sets GitHub Actions **repository variable**
-   `SUBMISSION_APP_BOT_LOGIN=hammerdb-results-submit[bot]`, checking the
-   actual App bot login. This enables validation to recognise ONLY the exact
-   approved App bot authoring `submission/` branches in the SAME
-   TPC-Council repository. Existing human PR attribution remains enforced.
-3. HammerDB Ltd operates a **separate TPC-only Cloudflare Worker instance in
+1. HammerDB Ltd operates a **separate TPC-only Cloudflare Worker instance in
    our existing Cloudflare account** with a **separate KV namespace**. Do not
    reconfigure or redeploy the working HammerDB Ltd Worker. Use the included
    `service/worker.mjs` and `service/wrangler.toml` template with:
@@ -69,18 +69,20 @@ at the existing **HammerDB Ltd-only** Worker.
    `GITHUB_APP_CLIENT_SECRET`, and `GITHUB_APP_PRIVATE_KEY` as **private
    Worker secrets**, not repository/Pages files. We reuse the *approved App*
    credentials; no new App is created.
-4. Add the new TPC Worker `https://<tpc-worker-host>/oauth/callback` as an
+2. Add the new TPC Worker `https://hammerdb-results-tpc-submit.hammerdb.workers.dev/oauth/callback` as an
    **additional** OAuth redirect URI on the existing GitHub App without
    removing the working HammerDB Ltd callback. Confirm that the separate
    TPC Worker `/health` returns `configured:true`.
-5. Test a complete real authorisation using a **new, valid** benchmark JSON,
+3. Test a complete real authorisation using a **new, valid** benchmark JSON,
    verifying that the PR is created against **TPC-Council**, comes from
    `hammerdb-results-submit[bot]`, and passes CI. Do not merge a synthetic
    benchmark result. Do not send submissions to HammerDB Ltd.
-6. After the test, submit a **small second PR** changing only the public
-   `endpoint` in `site/submission-service-config.js` to the tested TPC
-   Worker URL. TPC-Council reviews/merges that activation PR. Then
-   **Do it for me** becomes selectable. The manual route remains available.
+4. **No second PR.** The public endpoint is already part of PR #19; when the
+   independent TPC Worker is live and its `/health` response reports
+   `configured: true`, **Do it for me** becomes selectable. The manual route
+   remains available. A successful `/health` response checks configured
+   credentials, not GitHub App installation; verify App authorisation with a
+   real test PR before announcing the automatic route as operational.
 
 ## Safeguards and compatibility
 
