@@ -229,9 +229,12 @@ async function submit(request,env){
 }
 export async function handleRequest(request,env,fetchImpl=fetch){
   const url=new URL(request.url);
-  if(request.method==="GET"&&url.pathname==="/health")
-    return asJSON({status:"ok",configured:Boolean(env.PENDING&&
+  if(request.method==="GET"&&url.pathname==="/health"){
+    const result=asJSON({status:"ok",configured:Boolean(env.PENDING&&
       env.GITHUB_APP_CLIENT_ID&&env.GITHUB_APP_CLIENT_SECRET&&env.GITHUB_APP_PRIVATE_KEY)});
+    const origin=request.headers.get("Origin");
+    return origin===env.ALLOWED_ORIGIN?withCors(result,origin):result;
+  }
   if(url.pathname==="/oauth/callback"&&request.method==="GET")
     return oauthCallback(request,env,fetchImpl);
   if(url.pathname==="/submissions"&&request.method==="OPTIONS"){
