@@ -31,7 +31,7 @@ const sample={
 };
 async function mount({api="https://submissions.example.workers.dev",
   oauth="https://github.com/login/oauth/authorize?client_id=test&state=123",
-  failService=false,preload=true,clipboardBlocked=false}={}){
+  failService=false,failHealth=false,preload=true,clipboardBlocked=false}={}){
   const elements=new Map(),requests=[],navigations=[],pageEvents=new Map(),openedTabs=[],clipboardWrites=[];
   const get=id=>{
     if(!elements.has(id))elements.set(id,new Element(id));
@@ -59,6 +59,10 @@ async function mount({api="https://submissions.example.workers.dev",
     const value=String(url);requests.push({url:value,opts});
     if(value===fakeUrl)return {ok:true,status:200,text:async()=>JSON.stringify(sample)};
     if(value.startsWith("https://raw.githubusercontent.com/"))return {ok:false,status:404};
+    if(value===api+"/health"){
+      if(failHealth)return {ok:false,status:503,json:async()=>({status:"error",configured:false})};
+      return {ok:true,status:200,json:async()=>({status:"ok",configured:true})};
+    }
     if(value===api+"/submissions"){
       if(failService)return {ok:false,status:503,json:async()=>({error:"Service offline"})};
       return {ok:true,status:200,json:async()=>({authorizeUrl:oauth})};
@@ -151,12 +155,13 @@ test("normal refresh starts empty and does not load a saved JSON",async()=>{
   const p=await mount({preload:false});
   assert.equal(p.get("preview").hidden,true);
   assert.equal(p.get("submit-section").hidden,true);
-  assert.equal(p.requests.length,0);
+  assert.equal(p.requests.filter(r=>!r.url.endsWith("/health")).length,0);
   assert.doesNotMatch(script,/restoreDraft|localStorage\.setItem\(.*submission/);
 });
 
-test("the TPC-Council form has a deliberate automatic-service approval gate",()=>{
-  assert.match(config,/endpoint:\s*""/,"TPC production must not use the HammerDB Ltd Worker");
+test("the TPC-Council form targets only the new independent Worker",()=>{
+  assert.match(config,/endpoint:\s*"https:\/\/hammerdb-results-tpc-submit\.hammerdb\.workers\.dev"/);
+  assert.match(script,/fetch\(submissionEndpoint\+"\/health"\)/,"Automatic route needs live service");
   assert.doesNotMatch(config,/ghp_|ghs_|BEGIN RSA PRIVATE KEY|client_secret\s*:/);
   assert.match(html,/submission-service-config\.js/);
 });
@@ -335,4 +340,20 @@ test("TPC form links only to Council and never posts to the HammerDB Ltd target"
   assert.equal(JSON.parse(post.opts.body).target,"TPC-Council/hammerdb-results");
   assert.match(html,/href="https:\/\/github\.com\/TPC-Council\/hammerdb-results"/);
   assert.doesNotMatch(config,/endpoint:\s*"https:\/\/hammerdb-results-submit\.hammerdb\.workers\.dev"/);
+});
+
+test("when the TPC Worker is offline the form stays on the manual submission route",async()=>{
+  const p=await mount({failHealth:true,preload:false});
+  assert.equal(p.get("pr-auto").disabled,true);
+  assert.equal(p.get("pr-auto").checked,false);
+  assert.equal(p.get("pr-manual").checked,true);
+  assert.equal(p.get("manual-pr-actions").hidden,false);
+  assert.equal(p.requests.filter(x=>x.url.endsWith("/submissions")).length,0);
+});
+test("when the dedicated TPC Worker is healthy the automatic route enables without a second PR",async()=>{
+  const p=await mount({preload:false});
+  assert.equal(p.get("pr-auto").disabled,false);
+  assert.equal(p.get("pr-auto").checked,true);
+  assert.equal(p.get("auto-pr-actions").hidden,false);
+  assert.equal(p.requests.filter(x=>x.url.endsWith("/health")).length,1);
 });
