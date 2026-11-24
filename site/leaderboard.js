@@ -120,7 +120,7 @@
     return '<details class="configuration-evidence"><summary>' + (row.workload_class === "unclassified" ? "View recorded configuration" : "Why is this labelled " + esc(row.workload_class === "io-intensive" ? "I/O-intensive" : "CPU-intensive")) +
       '?</summary><p><strong>Submitter-declared configuration.</strong> UAW: ' + esc(uaw) +
       " · Durability: " + esc(durability) + "\n" + esc(row.workload_details || "") +
-      '\nThis describes the test configuration, not a diagnosis of the hardware bottleneck.</p></details>';
+      '</p></details>';
   }
 
   function card(row, rank, topNopm) {
@@ -155,7 +155,7 @@
       '</div><div class="context-small">' + esc(row.cpu_model || "CPU model not recorded") +
       '</div><div class="context-small">' + esc(row.memory || "Memory not recorded") + "</div></div>" +
       '<div class="configuration">' + chips + "</div></div>" +
-      (row.result_description ? '<p class="card-description">' + esc(row.result_description) + "</p>" : "") +
+      (row.result_description ? '<details class="run-details"><summary>Test details</summary><p class="card-description">' + esc(row.result_description) + "</p></details>" : "") +
       '<div class="card-bottom">' + identity(row) +
       '<div class="card-actions"><a class="provenance-link" href="annotate.html?jobid=' + encodeURIComponent(row.jobid || "") + '">Comments' + (isC ? " / CPU-I/O" : "") + '</a>' + (sourceLink && row.attribution_source === "original-pr" ?
         '<a class="provenance-link" href="' + esc(sourceLink) + '" target="_blank" rel="noopener noreferrer">Original PR</a>' : "") +

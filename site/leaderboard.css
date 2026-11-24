@@ -120,7 +120,11 @@ h1{font-size:clamp(34px,4vw,57px);line-height:1.08;letter-spacing:-.055em;font-w
 .context-small{font-size:11px;color:var(--muted);margin-top:5px}
 .configuration{display:flex;gap:7px;flex-wrap:wrap}
 .chip{border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;background:var(--surface-raised);color:var(--muted);white-space:nowrap}
-.card-description{margin:15px 0 2px;border-left:3px solid var(--accent-2);padding:5px 0 5px 12px;color:var(--text);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.run-details{margin-top:16px;border:1px solid var(--border);border-radius:11px;background:var(--surface-soft)}
+.run-details summary{cursor:pointer;padding:12px 14px;font-size:12px;font-weight:800;color:var(--accent)}
+.run-details summary:hover{background:var(--surface-raised)}
+.run-details[open] summary{border-bottom:1px solid var(--border)}
+.card-description{margin:12px 14px 14px;border-left:3px solid var(--accent-2);padding:5px 0 5px 12px;color:var(--text);font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
 .card-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;border-top:1px solid var(--border);margin-top:20px;padding-top:17px}
 .attribution{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
 .github-avatar{width:34px;height:34px;border-radius:50%;background:var(--surface-raised);border:1px solid var(--border);display:grid;place-items:center;font-weight:850;color:var(--accent)}
