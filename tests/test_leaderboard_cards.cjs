@@ -42,12 +42,12 @@ async function render(description) {
 }
 
 test("long result commentary is collapsed in Test details and preserves score and attribution", async () => {
-  const {html} = await render("Hardware: 192 CPUs\\nWorkload: 768 warehouses\\nTuning: <script>alert(1)</script>");
-  assert.match(html, /<details class="run-details"><summary>Test details<\\/summary>/);
+  const {html} = await render(["Hardware: 192 CPUs", "Workload: 768 warehouses", "Tuning: <script>alert(1)</script>"].join(String.fromCharCode(10)));
+  assert.ok(html.includes('<details class="run-details"><summary>Test details</summary>'));
   assert.doesNotMatch(html, /<details class="run-details"[^>]*open/);
   assert.match(html, /<p class="card-description">Hardware: 192 CPUs/);
   assert.match(html, /Workload: 768 warehouses/);
-  assert.match(html, /&lt;script&gt;alert\\(1\\)&lt;\\/script&gt;/);
+  assert.ok(html.includes("&lt;script&gt;alert(1)&lt;/script&gt;"));
   assert.doesNotMatch(html, /<script>alert/);
   assert.match(html, /2,653,370/);
   assert.match(html, /Submitted by/);
